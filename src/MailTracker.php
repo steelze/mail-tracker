@@ -92,7 +92,7 @@ class MailTracker implements \Swift_Events_SendListener {
         if (empty($matches[2])) {
             $url = app()->make('url')->to('/');
         } else {
-            $url = $matches[2];
+            $url = str_replace('&amp;', '&', $matches[2]);
         }
 
     	return $matches[1].route('mailTracker_l',

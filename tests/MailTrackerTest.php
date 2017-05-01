@@ -139,7 +139,7 @@ class AddressVerificationTest extends TestCase
 		$clicks = $track->clicks;
 		$clicks++;
 
-		$redirect = 'http://'.str_random(15).'.com/'.str_random(10).'/'.str_random(10).'/'.rand(0,100).'/'.rand(0,100).'?page='.rand(0,100).'&amp;x='.str_random(32);
+		$redirect = 'http://'.str_random(15).'.com/'.str_random(10).'/'.str_random(10).'/'.rand(0,100).'/'.rand(0,100).'?page='.rand(0,100).'&x='.str_random(32);
 
 		$url = action('\jdavidbakr\MailTracker\MailTrackerController@getL',[
     			\jdavidbakr\MailTracker\MailTracker::hash_url($redirect), // Replace slash with dollar sign
@@ -392,9 +392,75 @@ class AddressVerificationTest extends TestCase
 		$track = $track->fresh();
 		$meta = $track->meta;
 		$this->assertFalse($meta->get('success'));
-	}
+	}/** @noinspection ProblematicWhitespace */
 
-	/**
+    /**
+     * @test
+     */
+    public function it_handles_ampersands_in_links()
+    {
+        Event::fake();
+        Config::set('mail-tracker.track-links', true);
+        Config::set('mail-tracker.inject-pixel', true);
+        Config::set('mail.driver', 'array');
+        (new Illuminate\Mail\MailServiceProvider(app()))->register();
+        // Must re-register the MailTracker to get the test to work
+        $this->app['mailer']->getSwiftMailer()->registerPlugin(new MailTracker());
+
+        $faker = Faker\Factory::create();
+        $email = $faker->email;
+        $subject = $faker->sentence;
+        $name = $faker->firstName . ' ' .$faker->lastName;
+        \View::addLocation(__DIR__);
+
+        \Mail::send('email.testAmpersand', [], function ($message) use($email, $subject, $name) {
+            $message->from('from@johndoe.com', 'From Name');
+            $message->sender('sender@johndoe.com', 'Sender Name');
+
+            $message->to($email, $name);
+
+            $message->cc('cc@johndoe.com', 'CC Name');
+            $message->bcc('bcc@johndoe.com', 'BCC Name');
+
+            $message->replyTo('reply-to@johndoe.com', 'Reply-To Name');
+
+            $message->subject($subject);
+
+            $message->priority(3);
+        });
+
+        $driver = $this->app['swift.transport']->driver();
+        $this->assertEquals(1, count($driver->messages()));
+
+        $mes = $driver->messages()[0];
+        $body = $mes->getBody();
+        $hash = $mes->getHeaders()->get('X-Mailer-Hash')->getValue();
+
+        $matches = null;
+        preg_match_all('/(<a[^>]*href=[\'"])([^\'"]*)/', $body, $matches);
+        $links = $matches[2];
+        $aLink = $links[1];
+
+        $expected_url = "http://www.google.com?q=foo&x=bar";
+        $this->assertNotNull($aLink);
+        $this->assertNotEquals($expected_url, $aLink);
+
+        $this->call('GET',$aLink);
+        $this->assertRedirectedTo($expected_url);
+
+        Event::assertDispatched(jdavidbakr\MailTracker\Events\LinkClickedEvent::class);
+
+        $this->seeInDatabase('sent_emails_url_clicked',[
+            'url' => $expected_url,
+            'clicks' => 1,
+        ]);
+
+        $track = \jdavidbakr\MailTracker\Model\SentEmail::whereHash($hash)->first();
+        $this->assertNotNull($track);
+        $this->assertEquals(1, $track->clicks);
+    }
+
+    /**
 	 * @test
 	 */
 	public function it_retrieves_header_data()
