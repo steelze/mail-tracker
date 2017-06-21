@@ -119,6 +119,12 @@ class MailTracker implements \Swift_Events_SendListener {
         foreach($message->getTo() as $to_email=>$to_name) {
             foreach($message->getFrom() as $from_email=>$from_name) {
                 $headers = $message->getHeaders();
+                if($headers->get('X-No-Track')) {
+                    // Don't send with this header
+                    $headers->remove('X-No-Track');
+                    // Don't track this email
+                    continue;
+                }
                 do {
                     $hash = str_random(32);
                     $used = SentEmail::where('hash',$hash)->count();

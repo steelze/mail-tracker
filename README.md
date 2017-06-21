@@ -87,6 +87,15 @@ Once installed, all outgoing mail will be logged to the database.  The following
 * **admin-template**: The params for the Admin Panel and Views. You can integrate your existing Admin Panel with the MailTracker admin panel.
 * **date-format**: You can define the format to show dates in the Admin Panel.
 
+If you do not wish to have an email tracked, then you can add the ```X-No-Track``` header to your message.  Put any random string into this header to prevent the tracking from occurring.  The header will be removed from the email prior to being sent.
+
+``` php
+\Mail::send('email.test', [], function ($message) {
+    // ... other settings here
+    $message->getHeaders()->addTextHeader('X-No-Track',str_random(10));
+});
+```
+
 ## Events
 
 When an email is sent, viewed, or a link is clicked, its tracking information is counted in the database using the jdavidbark\MailTracker\Model\SentEmail model. You may want to do additional processing on these events, so an event is fired in these cases:
