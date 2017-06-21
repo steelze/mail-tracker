@@ -119,7 +119,10 @@ class MailTracker implements \Swift_Events_SendListener {
         foreach($message->getTo() as $to_email=>$to_name) {
             foreach($message->getFrom() as $from_email=>$from_name) {
                 $headers = $message->getHeaders();
-                $hash = str_random(32);
+                do {
+                    $hash = str_random(32);
+                    $used = SentEmail::where('hash',$hash)->count();
+                } while($used > 0);
                 $headers->addTextHeader('X-Mailer-Hash',$hash);
                 $subject = $message->getSubject();
 
