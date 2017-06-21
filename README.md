@@ -208,7 +208,7 @@ and then in your event listener:
 public function handle(EmailSentEvent $event)
 {
     $tracker = $event->sent_email;
-    $model_id = $event->getHeader('X-Model-ID');
+    $model_id = $event->sent_email->getHeader('X-Model-ID');
     $model = Model::find($model_id);
     // Perform your tracking/linking tasks on $model knowing the SentEmail object
 }
