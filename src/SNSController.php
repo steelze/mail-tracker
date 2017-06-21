@@ -26,6 +26,10 @@ class SNSController extends Controller
             $validator = new SNSMessageValidator();
             $validator->validate($message);
         }
+        // If we have a topic defined, make sure this is that topic
+        if(config('mail-tracker.sns-topic') && $message->offsetGet('TopicArn') != config('mail-tracker.sns-topic')) {
+            return 'invalid topic ARN';
+        }
         
         switch($message->offsetGet('Type')) {
             case 'SubscriptionConfirmation':
@@ -71,7 +75,7 @@ class SNSController extends Controller
     {
         $sent_email = SentEmail::where('message_id',$message->mail->messageId)->first();
         if($sent_email) {
-            $meta = $sent_email->meta;
+            $meta = collect($sent_email->meta);
             $meta->put('smtpResponse',$message->delivery->smtpResponse);
             $meta->put('success',true);
             $meta->put('delivered_at',$message->delivery->timestamp);
@@ -84,7 +88,7 @@ class SNSController extends Controller
     {
         $sent_email = SentEmail::where('message_id',$message->mail->messageId)->first();
         if($sent_email) {
-            $meta = $sent_email->meta;
+            $meta = collect($sent_email->meta);
             $current_codes = [];
             if($meta->has('failures')) {
                 $current_codes = $meta->get('failures');
@@ -104,7 +108,7 @@ class SNSController extends Controller
         $message_id = $message->mail->messageId;
         $sent_email = SentEmail::where('message_id',$message_id)->first();
         if($sent_email) {
-            $meta = $sent_email->meta;
+            $meta = collect($sent_email->meta);
             $meta->put('complaint',true);
             $meta->put('success',false);
             $meta->put('complaint_time',$message->complaint->timestamp);

@@ -57,6 +57,7 @@ class AddressVerificationTest extends TestCase
 	        'secret' => env('AWS_SECRET_ACCESS_KEY')
 	    ]);
 	    $app['config']->set('mail.from.address',env('FROM_EMAIL'));
+		$app['config']->set('app.debug',true);
 	}
 
 	public function testSendMessage()
@@ -229,6 +230,60 @@ class AddressVerificationTest extends TestCase
 					])
 			]);
 		$this->see('subscription confirmed');
+	}
+
+	/**
+	 * @test
+	 */
+	public function it_processes_with_registered_topic()
+	{
+		$topic = str_random(32);
+		Config::set('mail-tracker.sns-topic',$topic);
+		$url = action('\jdavidbakr\MailTracker\SNSController@callback');
+		$this->post($url,[
+				'message'=>json_encode([
+						// Required
+				        'Message'=>'test subscription message',
+				        'MessageId'=>str_random(10),
+				        'Timestamp'=>\Carbon\Carbon::now()->timestamp,
+				        'TopicArn'=>$topic,
+				        'Type'=>'SubscriptionConfirmation',
+				        'Signature'=>str_random(32),
+				        'SigningCertURL'=>str_random(32),
+				        'SignatureVersion'=>1,
+				        // Request-specific
+						'SubscribeURL'=>'http://google.com',
+						'Token'=>str_random(10),
+					])
+			]);
+		$this->see('subscription confirmed');
+	}
+
+	/**
+	 * @test
+	 */
+	public function it_ignores_invalid_topic()
+	{
+		$topic = str_random(32);
+		Config::set('mail-tracker.sns-topic',$topic);
+		$url = action('\jdavidbakr\MailTracker\SNSController@callback');
+		$this->post($url,[
+				'message'=>json_encode([
+						// Required
+				        'Message'=>'test subscription message',
+				        'MessageId'=>str_random(10),
+				        'Timestamp'=>\Carbon\Carbon::now()->timestamp,
+				        'TopicArn'=>str_random(32),
+				        'Type'=>'SubscriptionConfirmation',
+				        'Signature'=>str_random(32),
+				        'SigningCertURL'=>str_random(32),
+				        'SignatureVersion'=>1,
+				        // Request-specific
+						'SubscribeURL'=>'http://google.com',
+						'Token'=>str_random(10),
+					])
+			]);
+		$this->See('invalid topic ARN');
 	}
 
 	/**
