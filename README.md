@@ -218,7 +218,7 @@ Note that the headers you are attaching to the email are actually going out with
 
 ## Amazon SES features
 
-If you use Amazon SES, you can add some additional information to your tracking.  To set up the SES callbacks, first set up SES notifications under your domain in the SES control panel.  Then subscribe to the topic by going to the admin panel of the notification topic and creating a subscription for the URL you copied from the admin page.  The system should immediately respond to the subscription request.  If you like, you can use multiple subscriptions (i.e. one for delivery, one for bounces).  See above for events that are fired on a failed message.
+If you use Amazon SES, you can add some additional information to your tracking.  To set up the SES callbacks, first set up SES notifications under your domain in the SES control panel.  Then subscribe to the topic by going to the admin panel of the notification topic and creating a subscription for the URL you copied from the admin page.  The system should immediately respond to the subscription request.  If you like, you can use multiple subscriptions (i.e. one for delivery, one for bounces).  See above for events that are fired on a failed message.  **For added security, it is recommended to set the topic ARN into the mail-tracker config.**
 
 ## Views
 
