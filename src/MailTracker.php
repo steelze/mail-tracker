@@ -142,7 +142,6 @@ class MailTracker implements \Swift_Events_SendListener {
 
                 foreach ($message->getChildren() as $part) {
                     if (strpos($part->getContentType(), 'text/html') === 0) {
-                        $converter->setHTML($part->getBody());
                         $part->setBody($this->addTrackers($message->getBody(), $hash));
                     }
                 }
