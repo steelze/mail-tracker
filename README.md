@@ -13,7 +13,7 @@ MailTracker will hook into all outgoing emails from Laravel/Lumen and inject a t
 First, upgrade to version 2.1 by running:
 
 ``` bash
-$ composer require maltonite/mail-tracker-1
+$ composer require jdavidbakr/mail-tracker ~2.1
 ```
 
 If you are updating from an earlier version, you will need to update the config file and run the new migrations.  For best results, make a backup copy of config/mail-tracker.php and the views in resources/views/vendor/emailTrackingViews (if they exists) to restore any values you have customized, then delete that file and run
