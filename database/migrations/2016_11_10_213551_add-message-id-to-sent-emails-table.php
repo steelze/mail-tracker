@@ -29,6 +29,8 @@ class AddMessageIdToSentEmailsTable extends Migration
     {
         Schema::connection((new SentEmail())->getConnectionName())->table('sent_emails', function(Blueprint $table) {
             $table->dropColumn('message_id');
+        });
+        Schema::connection((new SentEmail())->getConnectionName())->table('sent_emails', function(Blueprint $table) {
             $table->dropColumn('meta');
         });
     }
