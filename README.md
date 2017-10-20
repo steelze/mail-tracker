@@ -23,6 +23,8 @@ $ php artisan vendor:publish
 $ php artisan migrate
 ```
 
+Also note that the migration for the `sent_emails_url_clicked` table changed with version 2.1.13.  The change is that the URL column is now a `TEXT` field to allow for longer URLs.  If you have an old system you may want to manually change that column; there is no migration included to perform that update.
+
 ## Install (Laravel)
 
 Via Composer
