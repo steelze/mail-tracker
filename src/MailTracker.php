@@ -41,9 +41,11 @@ class MailTracker implements \Swift_Events_SendListener {
         $hash = $headers->get('X-Mailer-Hash')->getFieldBody();
         $sent_email = SentEmail::where('hash',$hash)->first();
 
-        // Get info about the
-        $sent_email->message_id = $headers->get('X-SES-Message-ID')->getFieldBody();
-        $sent_email->save();
+        // Get info about the message-id from SES
+        if($sent_email) {
+            $sent_email->message_id = $headers->get('X-SES-Message-ID')->getFieldBody();
+            $sent_email->save();
+        }
     }
 
     protected function addTrackers($html, $hash)
