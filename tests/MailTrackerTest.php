@@ -380,6 +380,7 @@ class AddressVerificationTest extends TestCase
 	 */
 	public function it_processes_a_bounce()
 	{
+		Event::fake();
 		$track = \jdavidbakr\MailTracker\Model\SentEmail::create([
 				'hash'=>str_random(32),
 			]);
@@ -430,6 +431,9 @@ class AddressVerificationTest extends TestCase
 		$track = $track->fresh();
 		$meta = $track->meta;
 		$this->assertFalse($meta->get('success'));
+		Event::assertDispatched(jdavidbakr\MailTracker\Events\PermanentBouncedMessageEvent::class, function($event) {
+			return $event->email_address == 'recipient@example.com';
+		});
 	}
 
 	/**
@@ -437,6 +441,7 @@ class AddressVerificationTest extends TestCase
 	 */
 	public function it_processes_a_complaint()
 	{
+		Event::fake();
 		$track = \jdavidbakr\MailTracker\Model\SentEmail::create([
 				'hash'=>str_random(32),
 			]);
@@ -485,6 +490,9 @@ class AddressVerificationTest extends TestCase
 		$track = $track->fresh();
 		$meta = $track->meta;
 		$this->assertFalse($meta->get('success'));
+		Event::assertDispatched(jdavidbakr\MailTracker\Events\PermanentBouncedMessageEvent::class, function($event) {
+			return $event->email_address == 'recipient@example.com';
+		});
 	}/** @noinspection ProblematicWhitespace */
 
     /**
