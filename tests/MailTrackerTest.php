@@ -53,10 +53,10 @@ class AddressVerificationTest extends TestCase
             'prefix'   => ''
         ]);
 	    $app['config']->set('aws.credentials', [
-	        'key'    => env('AWS_ACCESS_KEY_ID'),
-	        'secret' => env('AWS_SECRET_ACCESS_KEY')
+	        'key'    => 'aws-key',
+	        'secret' => 'aws-secret',
 	    ]);
-	    $app['config']->set('mail.from.address',env('FROM_EMAIL'));
+	    $app['config']->set('mail.from.address','test@example.com');
 		$app['config']->set('app.debug',true);
 	}
 
@@ -84,16 +84,16 @@ class AddressVerificationTest extends TestCase
 		\Mail::send('email.test', [], function ($message) use($email, $subject, $name) {
 		    $message->from('from@johndoe.com', 'From Name');
 		    $message->sender('sender@johndoe.com', 'Sender Name');
-		
+
 		    $message->to($email, $name);
-		
+
 		    $message->cc('cc@johndoe.com', 'CC Name');
 		    $message->bcc('bcc@johndoe.com', 'BCC Name');
-		
+
 		    $message->replyTo('reply-to@johndoe.com', 'Reply-To Name');
-		
+
 		    $message->subject($subject);
-		
+
 		    $message->priority(3);
 		});
 
@@ -124,16 +124,16 @@ class AddressVerificationTest extends TestCase
 		\Mail::send('email.test', [], function ($message) use($email, $subject, $name) {
 		    $message->from('from@johndoe.com', 'From Name');
 		    $message->sender('sender@johndoe.com', 'Sender Name');
-		
+
 		    $message->to($email, $name);
-		
+
 		    $message->cc('cc@johndoe.com', 'CC Name');
 		    $message->bcc('bcc@johndoe.com', 'BCC Name');
-		
+
 		    $message->replyTo('reply-to@johndoe.com', 'Reply-To Name');
-		
+
 		    $message->subject($subject);
-		
+
 		    $message->priority(3);
 
 		    $message->getHeaders()->addTextHeader('X-No-Track',str_random(10));
@@ -214,37 +214,66 @@ class AddressVerificationTest extends TestCase
 	 */
 	public function it_retrieves_the_mesage_id_from_ses()
 	{
-		if(!config('aws.credentials.key') || config('mail.from.address') == null) {
-			$this->markTestIncomplete();
-			return;
-		}
 		Config::set('mail.driver', 'ses');
-		(new Illuminate\Mail\MailServiceProvider(app()))->register();
-		// Must re-register the MailTracker to get the test to work
-        $this->app['mailer']->getSwiftMailer()->registerPlugin(new MailTracker());
+		$headers = Mockery::mock();
+		$headers->shouldReceive('get')
+			->with('X-No-Track')
+			->once()
+			->andReturn(null);
+		$this->mailer_hash = '';
+		$headers->shouldReceive('addTextHeader')
+			->once()
+			->andReturnUsing(function($key, $value) {
+				$this->mailer_hash = $value;
+			});
+		$mailer_hash_header = Mockery::mock();
+		$mailer_hash_header->shouldReceive('getFieldBody')
+			->once()
+			->andReturnUsing(function() {
+				return $this->mailer_hash;
+			});
+		$headers->shouldReceive('get')
+			->with('X-Mailer-Hash')
+			->once()
+			->andReturn($mailer_hash_header);
+		$headers->shouldReceive('get')
+			->with('X-SES-Message-ID')
+			->once()
+			->andReturn(Mockery::mock([
+				'getFieldBody'=>'aws-mailer-hash'
+			]));
+		$headers->shouldReceive('toString')
+			->once();
+		$event = Mockery::mock(\Swift_Events_SendEvent::class, [
+			'getMessage'=>Mockery::mock([
+				'getTo'=>[
+					'destination@example.com'=>'Destination Person'
+				],
+				'getFrom'=>[
+					'from@example.com'=>'From Name'
+				],
+				'getHeaders'=>$headers,
+				'getSubject'=>'The message subject',
+				'getBody'=>'The body',
+				'getContentType'=>'text/html',
+				'setBody'=>null,
+				'getChildren'=>[],
+				'getId'=>'message-id',
+			]),
+		]);
+		$tracker = new \jdavidbakr\MailTracker\MailTracker();
 
-		$faker = Faker\Factory::create();
-		$email = 'success@simulator.amazonses.com';
-		$subject = $faker->sentence;
-		$name = $faker->firstName . ' ' .$faker->lastName;
-		\View::addLocation(__DIR__);
-		\Mail::send('email.test', [], function ($message) use($email, $subject, $name) {
-		    $message->to($email, $name);
-		
-		    $message->replyTo('reply-to@johndoe.com', 'Reply-To Name');
-		
-		    $message->subject($subject);
-		
-		    $message->priority(3);
-		});
+		$tracker->beforeSendPerformed($event);
+		$tracker->sendPerformed($event);
+
 		$sent_email = \jdavidbakr\MailTracker\Model\SentEmail::orderBy('id','desc')->first();
-		$this->assertEquals(0, preg_match('/swift\.generated/',$sent_email->message_id));
+		$this->assertEquals('aws-mailer-hash', $sent_email->message_id);
 	}
 
 	/**
 	 * SNS Tests
 	 */
-	
+
 	/**
 	 * @test
 	 */
@@ -365,7 +394,7 @@ class AddressVerificationTest extends TestCase
 				        'SigningCertURL'=>str_random(32),
 				        'SignatureVersion'=>1,
 				        // Request-specific
-				        
+
 					])
 			]);
 		$this->see('notification processed');
@@ -424,7 +453,7 @@ class AddressVerificationTest extends TestCase
 				        'SigningCertURL'=>str_random(32),
 				        'SignatureVersion'=>1,
 				        // Request-specific
-				        
+
 					])
 			]);
 		$this->see('notification processed');
@@ -483,7 +512,7 @@ class AddressVerificationTest extends TestCase
 				        'SigningCertURL'=>str_random(32),
 				        'SignatureVersion'=>1,
 				        // Request-specific
-				        
+
 					])
 			]);
 		$this->see('notification processed');
@@ -575,16 +604,16 @@ class AddressVerificationTest extends TestCase
 		\Mail::send('email.test', [], function ($message) use($email, $subject, $name, $header_test) {
 		    $message->from('from@johndoe.com', 'From Name');
 		    $message->sender('sender@johndoe.com', 'Sender Name');
-		
+
 		    $message->to($email, $name);
-		
+
 		    $message->cc('cc@johndoe.com', 'CC Name');
 		    $message->bcc('bcc@johndoe.com', 'BCC Name');
-		
+
 		    $message->replyTo('reply-to@johndoe.com', 'Reply-To Name');
-		
+
 		    $message->subject($subject);
-		
+
 		    $message->priority(3);
 
 		    $message->getHeaders()->addTextHeader('X-Header-Test',$header_test);
