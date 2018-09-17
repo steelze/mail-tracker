@@ -98,6 +98,12 @@ If you do not wish to have an email tracked, then you can add the ```X-No-Track`
 });
 ```
 
+## Note on dev testing
+
+Several people have reporting the tracking pixel not working while they were testing.  What is happening with the tracking pixel is that the email client is connecting to your website to log the view.  In order for this to happen, images have to be visible in the client, and the client has to be able to connect to your server.
+
+When you are in a dev environment (i.e. using the `.test` domain with Valet, or another domain known only to your computer) you must have an email client on your computer.  Further complicating this is the fact that Gmail and some other web-based email clients don't connect to the images directly, but instead connect via proxy.  That proxy won't have a connection to your `.test` domain and therefore will not properly track emails.  I always recommend using [mailtrap.io](https://mailtrap.io) for any development environment when you are sending emails.  Not only does this solve the issue (mailtrap.io does not use a proxy service to forward images in the emails) but it also protects you from accidentally sending real emails from your test environment.
+
 ## Events
 
 When an email is sent, viewed, or a link is clicked, its tracking information is counted in the database using the jdavidbakr\MailTracker\Model\SentEmail model. You may want to do additional processing on these events, so an event is fired in these cases:
