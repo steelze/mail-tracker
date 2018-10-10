@@ -7,28 +7,28 @@ use jdavidbakr\MailTracker\Model\SentEmailUrlClicked;
 use jdavidbakr\MailTracker\Events\EmailSentEvent;
 use Event;
 
-class MailTracker implements \Swift_Events_SendListener {
+class MailTracker implements \Swift_Events_SendListener
+{
+    protected $hash;
 
-	protected $hash;
-
-	/**
-	 * Inject the tracking code into the message
-	 */
-	public function beforeSendPerformed(\Swift_Events_SendEvent $event)
-	{
-		$message = $event->getMessage();
+    /**
+     * Inject the tracking code into the message
+     */
+    public function beforeSendPerformed(\Swift_Events_SendEvent $event)
+    {
+        $message = $event->getMessage();
 
         // Create the trackers
         $this->createTrackers($message);
 
-    	// Purge old records
+        // Purge old records
         $this->purgeOldRecords();
-	}
+    }
 
     public function sendPerformed(\Swift_Events_SendEvent $event)
     {
         // If this was sent through SES, retrieve the data
-        if(config('mail.driver') == 'ses') {
+        if (config('mail.driver') == 'ses') {
             $message = $event->getMessage();
             $this->updateSesMessageId($message);
         }
@@ -39,10 +39,10 @@ class MailTracker implements \Swift_Events_SendListener {
         // Get the SentEmail object
         $headers = $message->getHeaders();
         $hash = $headers->get('X-Mailer-Hash')->getFieldBody();
-        $sent_email = SentEmail::where('hash',$hash)->first();
+        $sent_email = SentEmail::where('hash', $hash)->first();
 
         // Get info about the message-id from SES
-        if($sent_email) {
+        if ($sent_email) {
             $sent_email->message_id = $headers->get('X-SES-Message-ID')->getFieldBody();
             $sent_email->save();
         }
@@ -50,43 +50,45 @@ class MailTracker implements \Swift_Events_SendListener {
 
     protected function addTrackers($html, $hash)
     {
-    	if(config('mail-tracker.inject-pixel')) {
-	    	$html = $this->injectTrackingPixel($html, $hash);
-    	}
-    	if(config('mail-tracker.track-links')) {
-    		$html = $this->injectLinkTracker($html, $hash);
-    	}
+        if (config('mail-tracker.inject-pixel')) {
+            $html = $this->injectTrackingPixel($html, $hash);
+        }
+        if (config('mail-tracker.track-links')) {
+            $html = $this->injectLinkTracker($html, $hash);
+        }
 
-    	return $html;
+        return $html;
     }
 
     protected function injectTrackingPixel($html, $hash)
     {
-    	// Append the tracking url
-    	$tracking_pixel = '<img border=0 width=1 alt="" height=1 src="'.route('mailTracker_t',[$hash]).'" />';
+        // Append the tracking url
+        $tracking_pixel = '<img border=0 width=1 alt="" height=1 src="'.route('mailTracker_t', [$hash]).'" />';
 
-    	$linebreak = str_random(32);
-    	$html = str_replace("\n",$linebreak,$html);
+        $linebreak = str_random(32);
+        $html = str_replace("\n", $linebreak, $html);
 
-    	if(preg_match("/^(.*<body[^>]*>)(.*)$/", $html, $matches)) {
-    		$html = $matches[1].$matches[2].$tracking_pixel;
-    	} else {
-    		$html = $html . $tracking_pixel;
-    	}
-    	$html = str_replace($linebreak,"\n",$html);
+        if (preg_match("/^(.*<body[^>]*>)(.*)$/", $html, $matches)) {
+            $html = $matches[1].$matches[2].$tracking_pixel;
+        } else {
+            $html = $html . $tracking_pixel;
+        }
+        $html = str_replace($linebreak, "\n", $html);
 
-    	return $html;
+        return $html;
     }
 
     protected function injectLinkTracker($html, $hash)
     {
-    	$this->hash = $hash;
+        $this->hash = $hash;
 
-    	$html = preg_replace_callback("/(<a[^>]*href=['\"])([^'\"]*)/",
-    			array($this, 'inject_link_callback'),
-    			$html);
+        $html = preg_replace_callback(
+            "/(<a[^>]*href=['\"])([^'\"]*)/",
+                [$this, 'inject_link_callback'],
+                $html
+        );
 
-    	return $html;
+        return $html;
     }
 
     protected function inject_link_callback($matches)
@@ -97,17 +99,19 @@ class MailTracker implements \Swift_Events_SendListener {
             $url = str_replace('&amp;', '&', $matches[2]);
         }
 
-    	return $matches[1].route('mailTracker_l',
-    		[
-    			MailTracker::hash_url($url),
-    			$this->hash
-    		]);
+        return $matches[1].route(
+            'mailTracker_l',
+            [
+                MailTracker::hash_url($url),
+                $this->hash
+            ]
+        );
     }
 
-    static public function hash_url($url)
+    public static function hash_url($url)
     {
         // Replace "/" with "$"
-        return str_replace("/","$",base64_encode($url));
+        return str_replace("/", "$", base64_encode($url));
     }
 
     /**
@@ -118,10 +122,10 @@ class MailTracker implements \Swift_Events_SendListener {
      */
     protected function createTrackers($message)
     {
-        foreach($message->getTo() as $to_email=>$to_name) {
-            foreach($message->getFrom() as $from_email=>$from_name) {
+        foreach ($message->getTo() as $to_email=>$to_name) {
+            foreach ($message->getFrom() as $from_email=>$from_name) {
                 $headers = $message->getHeaders();
-                if($headers->get('X-No-Track')) {
+                if ($headers->get('X-No-Track')) {
                     // Don't send with this header
                     $headers->remove('X-No-Track');
                     // Don't track this email
@@ -129,9 +133,9 @@ class MailTracker implements \Swift_Events_SendListener {
                 }
                 do {
                     $hash = str_random(32);
-                    $used = SentEmail::where('hash',$hash)->count();
-                } while($used > 0);
-                $headers->addTextHeader('X-Mailer-Hash',$hash);
+                    $used = SentEmail::where('hash', $hash)->count();
+                } while ($used > 0);
+                $headers->addTextHeader('X-Mailer-Hash', $hash);
                 $subject = $message->getSubject();
 
                 $original_content = $message->getBody();
@@ -174,13 +178,13 @@ class MailTracker implements \Swift_Events_SendListener {
      */
     protected function purgeOldRecords()
     {
-        if(config('mail-tracker.expire-days') > 0) {
-            $emails = SentEmail::where('created_at','<',\Carbon\Carbon::now()
+        if (config('mail-tracker.expire-days') > 0) {
+            $emails = SentEmail::where('created_at', '<', \Carbon\Carbon::now()
                 ->subDays(config('mail-tracker.expire-days')))
                 ->select('id')
                 ->get();
-            SentEmailUrlClicked::whereIn('sent_email_id',$emails->pluck('id'))->delete();
-            SentEmail::whereIn('id',$emails->pluck('id'))->delete();
+            SentEmailUrlClicked::whereIn('sent_email_id', $emails->pluck('id'))->delete();
+            SentEmail::whereIn('id', $emails->pluck('id'))->delete();
         }
     }
 }

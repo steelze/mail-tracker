@@ -98,8 +98,7 @@ class MailTrackerServiceProvider extends ServiceProvider
         $config['namespace'] = 'jdavidbakr\MailTracker';
 
         if (!$this->isLumen()) {
-            Route::group($config, function()
-            {
+            Route::group($config, function () {
                 Route::get('t/{hash}', 'MailTrackerController@getT')->name('mailTracker_t');
                 Route::get('l/{url}/{hash}', 'MailTrackerController@getL')->name('mailTracker_l');
                 Route::post('sns', 'SNSController@callback')->name('mailTracker_SNS');
@@ -117,8 +116,7 @@ class MailTrackerServiceProvider extends ServiceProvider
         $config_admin['namespace'] = 'jdavidbakr\MailTracker';
 
         if (!$this->isLumen()) {
-            Route::group($config_admin, function()
-            {
+            Route::group($config_admin, function () {
                 Route::get('/', 'AdminController@getIndex')->name('mailTracker_Index');
                 Route::post('search', 'AdminController@postSearch')->name('mailTracker_Search');
                 Route::get('clear-search', 'AdminController@clearSearch')->name('mailTracker_ClearSearch');
