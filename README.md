@@ -243,11 +243,10 @@ When you do the php artisan vendor:publish simple views will add to your resourc
 
 ## Admin Panel
 
-Config your admin-route in the config file. Set the prefix and middlware.
-The route name is 'mailTracker_Index'. The standard admin panel route is located at /email-manager.
-You can use route names to include them into your existing admin menu.
-You can customize your route in the config file.
-You can see all sent emails, total opens, total urls clicks, show individuals emails and show the urls clicked details.
+MailTracker comes with a built-in administration area.  The default configuration that is published with the package puts it behind the `can:see-sent-emails` middleware; you may create a gate for this rule or change it to use one of your own. You may also change the defaul prefix as well as disable the admin routes completely.
+
+The route name is 'mailTracker_Index'. The standard admin panel route is located at /email-manager. You can use route names to include them into your existing admin menu. You can customize your route in the config file. You can see all sent emails, total opens, total urls clicks, show individuals emails and show the urls clicked details.
+
 All views (email tamplates, panel) can be customized in resources/views/vendor/emailTrakingViews.
 
 ## Contributing
