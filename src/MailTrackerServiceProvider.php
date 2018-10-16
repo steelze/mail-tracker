@@ -115,7 +115,7 @@ class MailTrackerServiceProvider extends ServiceProvider
         $config_admin = $this->app['config']->get('mail-tracker.admin-route', []);
         $config_admin['namespace'] = 'jdavidbakr\MailTracker';
 
-        if(array_get($config_admin, 'enabled', true)) {
+        if (array_get($config_admin, 'enabled', true)) {
             if (!$this->isLumen()) {
                 Route::group($config_admin, function () {
                     Route::get('/', 'AdminController@getIndex')->name('mailTracker_Index');
