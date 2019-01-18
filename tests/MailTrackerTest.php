@@ -4,9 +4,27 @@ use jdavidbakr\MailTracker\MailTracker;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Orchestra\Testbench\BrowserKit\TestCase;
 use Illuminate\Support\Facades\Config;
+use Orchestra\Testbench\Exceptions\Handler;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 
 class AddressVerificationTest extends TestCase
 {
+    protected function disableExceptionHandling()
+    {
+        $this->app->instance(ExceptionHandler::class, new class extends Handler {
+            public function __construct()
+            {
+            }
+            public function report(Exception $e)
+            {
+            }
+            public function render($request, Exception $e)
+            {
+                throw $e;
+            }
+        });
+    }
+
     /**
      * Setup the test environment.
      */
@@ -269,6 +287,24 @@ class AddressVerificationTest extends TestCase
             ]);
         $this->call('GET', $url);
         $this->assertRedirectedTo($redirect);
+    }
+
+    /**
+     * @test
+     */
+    public function random_string_in_link_does_not_crash(Type $var = null)
+    {
+        $this->disableExceptionHandling();
+        $url = action('\jdavidbakr\MailTracker\MailTrackerController@getL', [
+            str_random(32),
+            'the-mail-hash',
+        ]);
+
+        try {
+            $this->call('GET', $url);
+        } catch (jdavidbakr\MailTracker\Exceptions\BadUrlLink $e) {
+            $this->assertEquals('Mail hash: the-mail-hash', $e->getMessage());
+        }
     }
 
     /**
