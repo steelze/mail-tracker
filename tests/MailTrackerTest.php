@@ -3,6 +3,7 @@
 use jdavidbakr\MailTracker\MailTracker;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Orchestra\Testbench\BrowserKit\TestCase;
+use Illuminate\Support\Facades\Config;
 
 class AddressVerificationTest extends TestCase
 {
@@ -169,6 +170,48 @@ class AddressVerificationTest extends TestCase
             ]);
     }
 
+    /**
+     * @test
+     */
+    public function no_track_doesnt_crash_ses()
+    {
+        Event::fake();
+        Config::set('mail.driver', 'ses');
+
+        $faker = Faker\Factory::create();
+        $email = $faker->email;
+        $subject = $faker->sentence;
+        $name = $faker->firstName . ' ' .$faker->lastName;
+        \View::addLocation(__DIR__);
+        \Mail::send('email.test', [], function ($message) use ($email, $subject, $name) {
+            $message->from('from@johndoe.com', 'From Name');
+            $message->sender('sender@johndoe.com', 'Sender Name');
+
+            $message->to($email, $name);
+
+            $message->cc('cc@johndoe.com', 'CC Name');
+            $message->bcc('bcc@johndoe.com', 'BCC Name');
+
+            $message->replyTo('reply-to@johndoe.com', 'Reply-To Name');
+
+            $message->subject($subject);
+
+            $message->priority(3);
+
+            $message->getHeaders()->addTextHeader('X-No-Track', str_random(10));
+        });
+
+        $this->dontSeeInDatabase('sent_emails', [
+                'recipient' => $name.' <'.$email.'>',
+                'subject' => $subject,
+                'sender' => 'From Name <from@johndoe.com>',
+                'recipient' => "{$name} <{$email}>",
+            ]);
+    }
+
+    /**
+     * @test
+     */
     public function testPing()
     {
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
