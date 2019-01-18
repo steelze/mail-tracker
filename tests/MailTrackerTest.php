@@ -117,18 +117,17 @@ class AddressVerificationTest extends TestCase
         $content = 'Text to e-mail';
         \View::addLocation(__DIR__);
 
-        Mail::raw($content, function($message) use ($email, $name)
-        {
+        Mail::raw($content, function ($message) use ($email, $name) {
             $message->from('from@johndoe.com', 'From Name');
 
             $message->to($email, $name);
         });
 
         $this->seeInDatabase('sent_emails', [
-            'recipient'=>$name.' <'.$email.'>',
-            'sender'=>'From Name <from@johndoe.com>',
-            'recipient'=>"{$name} <{$email}>",
-            'content'=>$content
+            'recipient' => $name.' <'.$email.'>',
+            'sender' => 'From Name <from@johndoe.com>',
+            'recipient' => "{$name} <{$email}>",
+            'content' => $content
         ]);
     }
 
