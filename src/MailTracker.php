@@ -166,7 +166,7 @@ class MailTracker implements \Swift_Events_SendListener
                     'meta' => [],
                 ]);
 
-                Event::fire(new EmailSentEvent($tracker));
+                Event::dispatch(new EmailSentEvent($tracker));
             }
         }
     }
