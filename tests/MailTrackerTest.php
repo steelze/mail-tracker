@@ -1,11 +1,12 @@
 <?php
 
-use jdavidbakr\MailTracker\MailTracker;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Orchestra\Testbench\BrowserKit\TestCase;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Config;
+use jdavidbakr\MailTracker\MailTracker;
 use Orchestra\Testbench\Exceptions\Handler;
+use Orchestra\Testbench\BrowserKit\TestCase;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 class AddressVerificationTest extends TestCase
 {
@@ -84,11 +85,11 @@ class AddressVerificationTest extends TestCase
         // Create an old email to purge
         Config::set('mail-tracker.expire-days', 1);
         $old_email = \jdavidbakr\MailTracker\Model\SentEmail::create([
-                'hash' => str_random(32),
+                'hash' => Str::random(32),
             ]);
         $old_url = \jdavidbakr\MailTracker\Model\SentEmailUrlClicked::create([
                 'sent_email_id' => $old_email->id,
-                'hash' => str_random(32),
+                'hash' => Str::random(32),
             ]);
         // Go into the future to make sure that the old email gets removed
         \Carbon\Carbon::setTestNow(\Carbon\Carbon::now()->addWeek());
@@ -177,7 +178,7 @@ class AddressVerificationTest extends TestCase
 
             $message->priority(3);
 
-            $message->getHeaders()->addTextHeader('X-No-Track', str_random(10));
+            $message->getHeaders()->addTextHeader('X-No-Track', Str::random(10));
         });
 
         $this->dontSeeInDatabase('sent_emails', [
@@ -216,7 +217,7 @@ class AddressVerificationTest extends TestCase
 
             $message->priority(3);
 
-            $message->getHeaders()->addTextHeader('X-No-Track', str_random(10));
+            $message->getHeaders()->addTextHeader('X-No-Track', Str::random(10));
         });
 
         $this->dontSeeInDatabase('sent_emails', [
@@ -233,7 +234,7 @@ class AddressVerificationTest extends TestCase
     public function testPing()
     {
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
-                'hash' => str_random(32),
+                'hash' => Str::random(32),
             ]);
 
         Event::fake();
@@ -253,7 +254,7 @@ class AddressVerificationTest extends TestCase
     public function testLink()
     {
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
-                'hash' => str_random(32),
+                'hash' => Str::random(32),
             ]);
 
         Event::fake();
@@ -261,7 +262,7 @@ class AddressVerificationTest extends TestCase
         $clicks = $track->clicks;
         $clicks++;
 
-        $redirect = 'http://'.str_random(15).'.com/'.str_random(10).'/'.str_random(10).'/'.rand(0, 100).'/'.rand(0, 100).'?page='.rand(0, 100).'&x='.str_random(32);
+        $redirect = 'http://'.Str::random(15).'.com/'.Str::random(10).'/'.Str::random(10).'/'.rand(0, 100).'/'.rand(0, 100).'?page='.rand(0, 100).'&x='.Str::random(32);
 
         $url = action('\jdavidbakr\MailTracker\MailTrackerController@getL', [
                 \jdavidbakr\MailTracker\MailTracker::hash_url($redirect), // Replace slash with dollar sign
@@ -296,7 +297,7 @@ class AddressVerificationTest extends TestCase
     {
         $this->disableExceptionHandling();
         $url = action('\jdavidbakr\MailTracker\MailTrackerController@getL', [
-            str_random(32),
+            Str::random(32),
             'the-mail-hash',
         ]);
 
@@ -385,16 +386,16 @@ class AddressVerificationTest extends TestCase
                 'message' => json_encode([
                         // Required
                         'Message' => 'test subscription message',
-                        'MessageId' => str_random(10),
+                        'MessageId' => Str::random(10),
                         'Timestamp' => \Carbon\Carbon::now()->timestamp,
-                        'TopicArn' => str_random(10),
+                        'TopicArn' => Str::random(10),
                         'Type' => 'SubscriptionConfirmation',
-                        'Signature' => str_random(32),
-                        'SigningCertURL' => str_random(32),
+                        'Signature' => Str::random(32),
+                        'SigningCertURL' => Str::random(32),
                         'SignatureVersion' => 1,
                         // Request-specific
                         'SubscribeURL' => 'http://google.com',
-                        'Token' => str_random(10),
+                        'Token' => Str::random(10),
                     ])
             ]);
         $this->see('subscription confirmed');
@@ -405,23 +406,23 @@ class AddressVerificationTest extends TestCase
      */
     public function it_processes_with_registered_topic()
     {
-        $topic = str_random(32);
+        $topic = Str::random(32);
         Config::set('mail-tracker.sns-topic', $topic);
         $url = action('\jdavidbakr\MailTracker\SNSController@callback');
         $this->post($url, [
                 'message' => json_encode([
                         // Required
                         'Message' => 'test subscription message',
-                        'MessageId' => str_random(10),
+                        'MessageId' => Str::random(10),
                         'Timestamp' => \Carbon\Carbon::now()->timestamp,
                         'TopicArn' => $topic,
                         'Type' => 'SubscriptionConfirmation',
-                        'Signature' => str_random(32),
-                        'SigningCertURL' => str_random(32),
+                        'Signature' => Str::random(32),
+                        'SigningCertURL' => Str::random(32),
                         'SignatureVersion' => 1,
                         // Request-specific
                         'SubscribeURL' => 'http://google.com',
-                        'Token' => str_random(10),
+                        'Token' => Str::random(10),
                     ])
             ]);
         $this->see('subscription confirmed');
@@ -432,23 +433,23 @@ class AddressVerificationTest extends TestCase
      */
     public function it_ignores_invalid_topic()
     {
-        $topic = str_random(32);
+        $topic = Str::random(32);
         Config::set('mail-tracker.sns-topic', $topic);
         $url = action('\jdavidbakr\MailTracker\SNSController@callback');
         $this->post($url, [
                 'message' => json_encode([
                         // Required
                         'Message' => 'test subscription message',
-                        'MessageId' => str_random(10),
+                        'MessageId' => Str::random(10),
                         'Timestamp' => \Carbon\Carbon::now()->timestamp,
-                        'TopicArn' => str_random(32),
+                        'TopicArn' => Str::random(32),
                         'Type' => 'SubscriptionConfirmation',
-                        'Signature' => str_random(32),
-                        'SigningCertURL' => str_random(32),
+                        'Signature' => Str::random(32),
+                        'SigningCertURL' => Str::random(32),
                         'SignatureVersion' => 1,
                         // Request-specific
                         'SubscribeURL' => 'http://google.com',
-                        'Token' => str_random(10),
+                        'Token' => Str::random(10),
                     ])
             ]);
         $this->See('invalid topic ARN');
@@ -460,9 +461,9 @@ class AddressVerificationTest extends TestCase
     public function it_processes_a_delivery()
     {
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
-                'hash' => str_random(32),
+                'hash' => Str::random(32),
             ]);
-        $message_id = str_random(32);
+        $message_id = Str::random(32);
         $track->message_id = $message_id;
         $track->save();
 
@@ -475,8 +476,8 @@ class AddressVerificationTest extends TestCase
                                 'timestamp' => \Carbon\Carbon::now()->timestamp,
                                 'messageId' => $message_id,
                                 'source' => $track->sender,
-                                'sourceArn' => str_random(32),
-                                'sendingAccountId' => str_random(10),
+                                'sourceArn' => Str::random(32),
+                                'sendingAccountId' => Str::random(10),
                                 'destination' => [$track->recipient],
                             ],
                             'delivery' => [
@@ -484,15 +485,15 @@ class AddressVerificationTest extends TestCase
                                 'processingTimeMillis' => 1000,
                                 'recipients' => [$track->recipient],
                                 'smtpResponse' => 'test smtp response',
-                                'reportingMTA' => str_random(10),
+                                'reportingMTA' => Str::random(10),
                             ],
                         ]),
-                        'MessageId' => str_random(10),
+                        'MessageId' => Str::random(10),
                         'Timestamp' => \Carbon\Carbon::now()->timestamp,
-                        'TopicArn' => str_random(10),
+                        'TopicArn' => Str::random(10),
                         'Type' => 'Notification',
-                        'Signature' => str_random(32),
-                        'SigningCertURL' => str_random(32),
+                        'Signature' => Str::random(32),
+                        'SigningCertURL' => Str::random(32),
                         'SignatureVersion' => 1,
                         // Request-specific
 
@@ -512,9 +513,9 @@ class AddressVerificationTest extends TestCase
     {
         Event::fake();
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
-                'hash' => str_random(32),
+                'hash' => Str::random(32),
             ]);
-        $message_id = str_random(32);
+        $message_id = Str::random(32);
         $track->message_id = $message_id;
         $track->save();
 
@@ -527,8 +528,8 @@ class AddressVerificationTest extends TestCase
                                 'timestamp' => \Carbon\Carbon::now()->timestamp,
                                 'messageId' => $message_id,
                                 'source' => $track->sender,
-                                'sourceArn' => str_random(32),
-                                'sendingAccountId' => str_random(10),
+                                'sourceArn' => Str::random(32),
+                                'sendingAccountId' => Str::random(10),
                                 'destination' => [$track->recipient],
                             ],
                             'bounce' => [
@@ -543,15 +544,15 @@ class AddressVerificationTest extends TestCase
                                     ],
                                 ],
                                 'timestamp' => \Carbon\Carbon::now()->timestamp,
-                                'feedbackId' => str_random(10),
+                                'feedbackId' => Str::random(10),
                             ],
                         ]),
-                        'MessageId' => str_random(10),
+                        'MessageId' => Str::random(10),
                         'Timestamp' => \Carbon\Carbon::now()->timestamp,
-                        'TopicArn' => str_random(10),
+                        'TopicArn' => Str::random(10),
                         'Type' => 'Notification',
-                        'Signature' => str_random(32),
-                        'SigningCertURL' => str_random(32),
+                        'Signature' => Str::random(32),
+                        'SigningCertURL' => Str::random(32),
                         'SignatureVersion' => 1,
                         // Request-specific
 
@@ -573,9 +574,9 @@ class AddressVerificationTest extends TestCase
     {
         Event::fake();
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
-                'hash' => str_random(32),
+                'hash' => Str::random(32),
             ]);
-        $message_id = str_random(32);
+        $message_id = Str::random(32);
         $track->message_id = $message_id;
         $track->save();
 
@@ -588,8 +589,8 @@ class AddressVerificationTest extends TestCase
                                 'timestamp' => \Carbon\Carbon::now()->timestamp,
                                 'messageId' => $message_id,
                                 'source' => $track->sender,
-                                'sourceArn' => str_random(32),
-                                'sendingAccountId' => str_random(10),
+                                'sourceArn' => Str::random(32),
+                                'sendingAccountId' => Str::random(10),
                                 'destination' => [$track->recipient],
                             ],
                             'complaint' => [
@@ -599,18 +600,18 @@ class AddressVerificationTest extends TestCase
                                     ],
                                 ],
                                 'timestamp' => \Carbon\Carbon::now()->timestamp,
-                                'feedbackId' => str_random(10),
-                                'userAgent' => str_random(10),
+                                'feedbackId' => Str::random(10),
+                                'userAgent' => Str::random(10),
                                 'complaintFeedbackType' => 'feedback type',
                                 'arrivalDate' => \Carbon\Carbon::now(),
                             ],
                         ]),
-                        'MessageId' => str_random(10),
+                        'MessageId' => Str::random(10),
                         'Timestamp' => \Carbon\Carbon::now()->timestamp,
-                        'TopicArn' => str_random(10),
+                        'TopicArn' => Str::random(10),
                         'Type' => 'Notification',
-                        'Signature' => str_random(32),
-                        'SigningCertURL' => str_random(32),
+                        'Signature' => Str::random(32),
+                        'SigningCertURL' => Str::random(32),
                         'SignatureVersion' => 1,
                         // Request-specific
 
@@ -700,7 +701,7 @@ class AddressVerificationTest extends TestCase
         $email = $faker->email;
         $subject = $faker->sentence;
         $name = $faker->firstName . ' ' .$faker->lastName;
-        $header_test = str_random(10);
+        $header_test = Str::random(10);
         \View::addLocation(__DIR__);
         \Mail::send('email.test', [], function ($message) use ($email, $subject, $name, $header_test) {
             $message->from('from@johndoe.com', 'From Name');
@@ -737,11 +738,11 @@ class AddressVerificationTest extends TestCase
         $this->artisan('migrate', ['--database' => 'secondary']);
 
         $old_email = \jdavidbakr\MailTracker\Model\SentEmail::create([
-            'hash' => str_random(32),
+            'hash' => Str::random(32),
         ]);
         $old_url = \jdavidbakr\MailTracker\Model\SentEmailUrlClicked::create([
             'sent_email_id' => $old_email->id,
-            'hash' => str_random(32),
+            'hash' => Str::random(32),
         ]);
         // Go into the future to make sure that the old email gets removed
         \Carbon\Carbon::setTestNow(\Carbon\Carbon::now()->addWeek());
@@ -787,16 +788,16 @@ class AddressVerificationTest extends TestCase
     {
         Event::fake();
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
-            'hash' => str_random(32),
+            'hash' => Str::random(32),
         ]);
-        $message_id = str_random(32);
+        $message_id = Str::random(32);
         $track->message_id = $message_id;
         $track->save();
 
         $urlClick = \jdavidbakr\MailTracker\Model\SentEmailUrlClicked::create([
             'sent_email_id' => $track->id,
             'url' => 'https://example.com',
-            'hash' => str_random(32)
+            'hash' => Str::random(32)
         ]);
         $urlClick->save();
         $this->assertTrue($track->urlClicks->count() === 1);

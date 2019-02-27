@@ -2,10 +2,11 @@
 
 namespace jdavidbakr\MailTracker;
 
-use jdavidbakr\MailTracker\Model\SentEmail;
-use jdavidbakr\MailTracker\Model\SentEmailUrlClicked;
-use jdavidbakr\MailTracker\Events\EmailSentEvent;
 use Event;
+use Illuminate\Support\Str;
+use jdavidbakr\MailTracker\Model\SentEmail;
+use jdavidbakr\MailTracker\Events\EmailSentEvent;
+use jdavidbakr\MailTracker\Model\SentEmailUrlClicked;
 
 class MailTracker implements \Swift_Events_SendListener
 {
@@ -65,7 +66,7 @@ class MailTracker implements \Swift_Events_SendListener
         // Append the tracking url
         $tracking_pixel = '<img border=0 width=1 alt="" height=1 src="'.route('mailTracker_t', [$hash]).'" />';
 
-        $linebreak = str_random(32);
+        $linebreak = Str::random(32);
         $html = str_replace("\n", $linebreak, $html);
 
         if (preg_match("/^(.*<body[^>]*>)(.*)$/", $html, $matches)) {
@@ -132,7 +133,7 @@ class MailTracker implements \Swift_Events_SendListener
                     continue;
                 }
                 do {
-                    $hash = str_random(32);
+                    $hash = Str::random(32);
                     $used = SentEmail::where('hash', $hash)->count();
                 } while ($used > 0);
                 $headers->addTextHeader('X-Mailer-Hash', $hash);

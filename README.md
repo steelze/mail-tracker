@@ -70,7 +70,7 @@ If you do not wish to have an email tracked, then you can add the ```X-No-Track`
 ``` php
 \Mail::send('email.test', [], function ($message) {
     // ... other settings here
-    $message->getHeaders()->addTextHeader('X-No-Track',str_random(10));
+    $message->getHeaders()->addTextHeader('X-No-Track',Str::random(10));
 });
 ```
 
