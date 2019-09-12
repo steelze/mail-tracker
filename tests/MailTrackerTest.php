@@ -1,30 +1,32 @@
 <?php
 
 use Illuminate\Support\Str;
+use Orchestra\Testbench\TestCase;
 use Illuminate\Support\Facades\Config;
 use jdavidbakr\MailTracker\MailTracker;
 use Orchestra\Testbench\Exceptions\Handler;
-use Orchestra\Testbench\BrowserKit\TestCase;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use jdavidbakr\MailTracker\Exceptions\BadUrlLink;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+
+class IgnoreExceptions extends Handler {
+    public function __construct()
+    {
+    }
+    public function report(Exception $e)
+    {
+    }
+    public function render($request, Exception $e)
+    {
+        throw $e;
+    }
+}
 
 class AddressVerificationTest extends TestCase
 {
     protected function disableExceptionHandling()
     {
-        $this->app->instance(ExceptionHandler::class, new class extends Handler {
-            public function __construct()
-            {
-            }
-            public function report(Exception $e)
-            {
-            }
-            public function render($request, Exception $e)
-            {
-                throw $e;
-            }
-        });
+        $this->app->instance(ExceptionHandler::class, new IgnoreExceptions);
     }
 
     /**
@@ -35,6 +37,8 @@ class AddressVerificationTest extends TestCase
         parent::setUp();
 
         $this->artisan('migrate', ['--database' => 'testing']);
+
+        return;
     }
 
     /**
@@ -120,7 +124,7 @@ class AddressVerificationTest extends TestCase
 
         Event::assertDispatched(jdavidbakr\MailTracker\Events\EmailSentEvent::class);
 
-        $this->seeInDatabase('sent_emails', [
+        $this->assertDatabaseHas('sent_emails', [
                 'recipient' => $name.' <'.$email.'>',
                 'subject' => $subject,
                 'sender' => 'From Name <from@johndoe.com>',
@@ -144,7 +148,7 @@ class AddressVerificationTest extends TestCase
             $message->to($email, $name);
         });
 
-        $this->seeInDatabase('sent_emails', [
+        $this->assertDatabaseHas('sent_emails', [
             'recipient' => $name.' <'.$email.'>',
             'sender' => 'From Name <from@johndoe.com>',
             'recipient' => "{$name} <{$email}>",
@@ -182,7 +186,7 @@ class AddressVerificationTest extends TestCase
             $message->getHeaders()->addTextHeader('X-No-Track', Str::random(10));
         });
 
-        $this->dontSeeInDatabase('sent_emails', [
+        $this->assertDatabaseMissing('sent_emails', [
                 'recipient' => $name.' <'.$email.'>',
                 'subject' => $subject,
                 'sender' => 'From Name <from@johndoe.com>',
@@ -221,7 +225,7 @@ class AddressVerificationTest extends TestCase
             $message->getHeaders()->addTextHeader('X-No-Track', Str::random(10));
         });
 
-        $this->dontSeeInDatabase('sent_emails', [
+        $this->assertDatabaseMissing('sent_emails', [
                 'recipient' => $name.' <'.$email.'>',
                 'subject' => $subject,
                 'sender' => 'From Name <from@johndoe.com>',
@@ -244,7 +248,7 @@ class AddressVerificationTest extends TestCase
         $pings++;
 
         $url = action('\jdavidbakr\MailTracker\MailTrackerController@getT', [$track->hash]);
-        $this->visit($url);
+        $response = $this->get($url);
 
         $track = $track->fresh();
         $this->assertEquals($pings, $track->opens);
@@ -269,12 +273,12 @@ class AddressVerificationTest extends TestCase
                 \jdavidbakr\MailTracker\MailTracker::hash_url($redirect), // Replace slash with dollar sign
                 $track->hash
             ]);
-        $this->call('GET', $url);
-        $this->assertRedirectedTo($redirect);
+        $response = $this->get($url);
+        $response->assertRedirect($redirect);
 
         Event::assertDispatched(jdavidbakr\MailTracker\Events\LinkClickedEvent::class);
 
-        $this->seeInDatabase('sent_emails_url_clicked', [
+        $this->assertDatabaseHas('sent_emails_url_clicked', [
                 'url' => $redirect,
                 'clicks' => 1,
             ]);
@@ -401,7 +405,7 @@ class AddressVerificationTest extends TestCase
     public function it_confirms_a_subscription()
     {
         $url = action('\jdavidbakr\MailTracker\SNSController@callback');
-        $this->post($url, [
+        $response = $this->post($url, [
                 'message' => json_encode([
                         // Required
                         'Message' => 'test subscription message',
@@ -417,7 +421,7 @@ class AddressVerificationTest extends TestCase
                         'Token' => Str::random(10),
                     ])
             ]);
-        $this->see('subscription confirmed');
+        $response->assertSee('subscription confirmed');
     }
 
     /**
@@ -428,7 +432,7 @@ class AddressVerificationTest extends TestCase
         $topic = Str::random(32);
         Config::set('mail-tracker.sns-topic', $topic);
         $url = action('\jdavidbakr\MailTracker\SNSController@callback');
-        $this->post($url, [
+        $response = $this->post($url, [
                 'message' => json_encode([
                         // Required
                         'Message' => 'test subscription message',
@@ -444,7 +448,7 @@ class AddressVerificationTest extends TestCase
                         'Token' => Str::random(10),
                     ])
             ]);
-        $this->see('subscription confirmed');
+        $response->assertSee('subscription confirmed');
     }
 
     /**
@@ -455,7 +459,7 @@ class AddressVerificationTest extends TestCase
         $topic = Str::random(32);
         Config::set('mail-tracker.sns-topic', $topic);
         $url = action('\jdavidbakr\MailTracker\SNSController@callback');
-        $this->post($url, [
+        $response = $this->post($url, [
                 'message' => json_encode([
                         // Required
                         'Message' => 'test subscription message',
@@ -471,7 +475,7 @@ class AddressVerificationTest extends TestCase
                         'Token' => Str::random(10),
                     ])
             ]);
-        $this->See('invalid topic ARN');
+        $response->assertSee('invalid topic ARN');
     }
 
     /**
@@ -486,7 +490,7 @@ class AddressVerificationTest extends TestCase
         $track->message_id = $message_id;
         $track->save();
 
-        $this->post(action('\jdavidbakr\MailTracker\SNSController@callback'), [
+        $response = $this->post(action('\jdavidbakr\MailTracker\SNSController@callback'), [
                 'message' => json_encode([
                         // Required
                         'Message' => json_encode([
@@ -518,7 +522,7 @@ class AddressVerificationTest extends TestCase
 
                     ])
             ]);
-        $this->see('notification processed');
+        $response->assertSee('notification processed');
         $track = $track->fresh();
         $meta = $track->meta;
         $this->assertEquals('test smtp response', $meta->get('smtpResponse'));
@@ -538,7 +542,7 @@ class AddressVerificationTest extends TestCase
         $track->message_id = $message_id;
         $track->save();
 
-        $this->post(action('\jdavidbakr\MailTracker\SNSController@callback'), [
+        $response = $this->post(action('\jdavidbakr\MailTracker\SNSController@callback'), [
                 'message' => json_encode([
                         // Required
                         'Message' => json_encode([
@@ -577,7 +581,7 @@ class AddressVerificationTest extends TestCase
 
                     ])
             ]);
-        $this->see('notification processed');
+        $response->assertSee('notification processed');
         $track = $track->fresh();
         $meta = $track->meta;
         $this->assertFalse($meta->get('success'));
@@ -599,7 +603,7 @@ class AddressVerificationTest extends TestCase
         $track->message_id = $message_id;
         $track->save();
 
-        $this->post(action('\jdavidbakr\MailTracker\SNSController@callback'), [
+        $response = $this->post(action('\jdavidbakr\MailTracker\SNSController@callback'), [
                 'message' => json_encode([
                         // Required
                         'Message' => json_encode([
@@ -636,7 +640,7 @@ class AddressVerificationTest extends TestCase
 
                     ])
             ]);
-        $this->see('notification processed');
+        $response->assertSee('notification processed');
         $track = $track->fresh();
         $meta = $track->meta;
         $this->assertFalse($meta->get('success'));
@@ -696,12 +700,12 @@ class AddressVerificationTest extends TestCase
         $this->assertNotNull($aLink);
         $this->assertNotEquals($expected_url, $aLink);
 
-        $this->call('GET', $aLink);
-        $this->assertRedirectedTo($expected_url);
+        $response = $this->call('GET', $aLink);
+        $response->assertRedirect($expected_url);
 
         Event::assertDispatched(jdavidbakr\MailTracker\Events\LinkClickedEvent::class);
 
-        $this->seeInDatabase('sent_emails_url_clicked', [
+        $this->assertDatabaseHas('sent_emails_url_clicked', [
             'url' => $expected_url,
             'clicks' => 1,
         ]);
@@ -791,7 +795,7 @@ class AddressVerificationTest extends TestCase
 
         Event::assertDispatched(jdavidbakr\MailTracker\Events\EmailSentEvent::class);
 
-        $this->seeInDatabase('sent_emails', [
+        $this->assertDatabaseHas('sent_emails', [
             'recipient' => $name.' <'.$email.'>',
             'subject' => $subject,
             'sender' => 'From Name <from@johndoe.com>'
