@@ -11,10 +11,10 @@ MailTracker will hook into all outgoing emails from Laravel and inject a trackin
 
 ## Upgrade from 2.0 or earlier
 
-First, upgrade to version 2.1 by running:
+First, upgrade to version 2.2 by running:
 
 ```bash
-$ composer require jdavidbakr/mail-tracker ~2.1
+$ composer require jdavidbakr/mail-tracker ~2.2
 ```
 
 If you are updating from an earlier version, you will need to update the config file and run the new migrations. For best results, make a backup copy of config/mail-tracker.php and the views in resources/views/vendor/emailTrackingViews (if they exists) to restore any values you have customized, then delete that file and run
@@ -31,7 +31,7 @@ Also note that the migration for the `sent_emails_url_clicked` table changed wit
 Via Composer
 
 ```bash
-$ composer require jdavidbakr/mail-tracker ~2.1
+$ composer require jdavidbakr/mail-tracker
 ```
 
 Publish the config file and migration
@@ -210,7 +210,7 @@ Note that the headers you are attaching to the email are actually going out with
 
 The following exceptions may be thrown. You may add them to your ignore list in your exception handler, or handle them as you wish.
 
--   jdavidbakr\MailTracker\Exceptions\BadUrlLink - the base64 decode of the URL parameter failed to return a valid redirect link. This may happen if somehow the URL gets truncated or is forged.
+-   jdavidbakr\MailTracker\Exceptions\BadUrlLink - Something went wrong with the url link. Either the base 64 encoded url is bad (this only applies to mail sent through version 2.1) or the email hash was not found to apply the link to.
 
 ## Amazon SES features
 

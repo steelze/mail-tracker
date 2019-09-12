@@ -319,6 +319,7 @@ class MailTrackerTest extends TestCase
     public function it_throws_exception_on_invalid_link()
     {
         $this->disableExceptionHandling();
+        $this->expectException(BadUrlLink::class);
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
                 'hash' => Str::random(32),
             ]);
@@ -335,11 +336,9 @@ class MailTrackerTest extends TestCase
                 'l' => $redirect,
                 'h' => 'bad-hash'
             ]);
-        try {
-            $this->call('GET', $url);
-        } catch (BadUrlLink $e) {
-            $this->assertEquals('Mail hash: bad-hash', $e->getMessage());
-        }
+        $response = $this->get($url);
+
+        $response->assertStatus(500);
     }
 
     /**
@@ -348,16 +347,13 @@ class MailTrackerTest extends TestCase
     public function random_string_in_link_does_not_crash(Type $var = null)
     {
         $this->disableExceptionHandling();
-        $url = action('\jdavidbakr\MailTracker\MailTrackerController@getL', [
+        $this->expectException(BadUrlLink::class);
+        $url = route('mailTracker_l', [
             Str::random(32),
             'the-mail-hash',
         ]);
 
-        try {
-            $this->call('GET', $url);
-        } catch (BadUrlLink $e) {
-            $this->assertEquals('Mail hash: the-mail-hash', $e->getMessage());
-        }
+        $this->get($url);
     }
 
     /**
