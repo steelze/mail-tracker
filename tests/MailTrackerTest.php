@@ -9,7 +9,8 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
 use jdavidbakr\MailTracker\Exceptions\BadUrlLink;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
-class IgnoreExceptions extends Handler {
+class IgnoreExceptions extends Handler
+{
     public function __construct()
     {
     }
@@ -22,7 +23,7 @@ class IgnoreExceptions extends Handler {
     }
 }
 
-class AddressVerificationTest extends TestCase
+class MailTrackerTest extends TestCase
 {
     protected function disableExceptionHandling()
     {
@@ -247,13 +248,41 @@ class AddressVerificationTest extends TestCase
         $pings = $track->opens;
         $pings++;
 
-        $url = action('\jdavidbakr\MailTracker\MailTrackerController@getT', [$track->hash]);
+        $url = route('mailTracker_t', [$track->hash]);
         $response = $this->get($url);
 
         $track = $track->fresh();
         $this->assertEquals($pings, $track->opens);
 
         Event::assertDispatched(jdavidbakr\MailTracker\Events\ViewEmailEvent::class);
+    }
+
+    public function testLegacyLink()
+    {
+        $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
+                'hash' => Str::random(32),
+            ]);
+
+        Event::fake();
+
+        $clicks = $track->clicks;
+        $clicks++;
+
+        $redirect = 'http://'.Str::random(15).'.com/'.Str::random(10).'/'.Str::random(10).'/'.rand(0, 100).'/'.rand(0, 100).'?page='.rand(0, 100).'&x='.Str::random(32);
+
+        $url = route('mailTracker_l', [
+                \jdavidbakr\MailTracker\MailTracker::hash_url($redirect), // Replace slash with dollar sign
+                $track->hash
+            ]);
+        $response = $this->get($url);
+        $response->assertRedirect($redirect);
+
+        Event::assertDispatched(jdavidbakr\MailTracker\Events\LinkClickedEvent::class);
+
+        $this->assertDatabaseHas('sent_emails_url_clicked', [
+                'url' => $redirect,
+                'clicks' => 1,
+            ]);
     }
 
     public function testLink()
@@ -269,9 +298,9 @@ class AddressVerificationTest extends TestCase
 
         $redirect = 'http://'.Str::random(15).'.com/'.Str::random(10).'/'.Str::random(10).'/'.rand(0, 100).'/'.rand(0, 100).'?page='.rand(0, 100).'&x='.Str::random(32);
 
-        $url = action('\jdavidbakr\MailTracker\MailTrackerController@getL', [
-                \jdavidbakr\MailTracker\MailTracker::hash_url($redirect), // Replace slash with dollar sign
-                $track->hash
+        $url = route('mailTracker_n', [
+                'l' => $redirect,
+                'h' => $track->hash
             ]);
         $response = $this->get($url);
         $response->assertRedirect($redirect);
@@ -302,9 +331,9 @@ class AddressVerificationTest extends TestCase
         $redirect = 'http://'.Str::random(15).'.com/'.Str::random(10).'/'.Str::random(10).'/'.rand(0, 100).'/'.rand(0, 100).'?page='.rand(0, 100).'&x='.Str::random(32);
 
         // Do it with an invalid hash
-        $url = action('\jdavidbakr\MailTracker\MailTrackerController@getL', [
-                \jdavidbakr\MailTracker\MailTracker::hash_url($redirect), // Replace slash with dollar sign
-                'bad-hash'
+        $url = route('mailTracker_n', [
+                'l' => $redirect,
+                'h' => 'bad-hash'
             ]);
         try {
             $this->call('GET', $url);

@@ -101,14 +101,20 @@ class MailTracker implements \Swift_Events_SendListener
         }
 
         return $matches[1].route(
-            'mailTracker_l',
+            'mailTracker_n',
             [
-                MailTracker::hash_url($url),
-                $this->hash
+                'l' => $url,
+                'h' => $this->hash
             ]
         );
     }
 
+    /**
+     * Legacy function
+     *
+     * @param [type] $url
+     * @return boolean
+     */
     public static function hash_url($url)
     {
         // Replace "/" with "$"

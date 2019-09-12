@@ -102,6 +102,7 @@ class MailTrackerServiceProvider extends ServiceProvider
             Route::group($config, function () {
                 Route::get('t/{hash}', 'MailTrackerController@getT')->name('mailTracker_t');
                 Route::get('l/{url}/{hash}', 'MailTrackerController@getL')->name('mailTracker_l');
+                Route::get('n', 'MailTrackerController@getN')->name('mailTracker_n');
                 Route::post('sns', 'SNSController@callback')->name('mailTracker_SNS');
             });
         } else {

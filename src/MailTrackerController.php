@@ -67,4 +67,32 @@ class MailTrackerController extends Controller
 
         throw new BadUrlLink('Mail hash: '.$hash);
     }
+
+    public function getN(Request $request)
+    {
+        $url = $request->l;
+        $hash = $request->h;
+        $tracker = Model\SentEmail::where('hash', $hash)
+            ->first();
+        if ($tracker) {
+            $tracker->clicks++;
+            $tracker->save();
+            $url_clicked = Model\SentEmailUrlClicked::where('url', $url)->where('hash', $hash)->first();
+            if ($url_clicked) {
+                $url_clicked->clicks++;
+                $url_clicked->save();
+            } else {
+                $url_clicked = Model\SentEmailUrlClicked::create([
+                    'sent_email_id' => $tracker->id,
+                    'url' => $url,
+                    'hash' => $tracker->hash,
+                ]);
+            }
+            Event::dispatch(new LinkClickedEvent($tracker));
+
+            return redirect($url);
+        }
+
+        throw new BadUrlLink('Mail hash: '.$hash);
+    }
 }
