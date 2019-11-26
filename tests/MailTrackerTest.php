@@ -557,6 +557,63 @@ class MailTrackerTest extends TestCase
     /**
      * @test
      */
+    public function it_processes_a_successful_delivery()
+    {
+        $this->disableExceptionHandling();
+        Event::fake();
+        $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
+                'hash' => Str::random(32),
+            ]);
+        $message_id = Str::random(32);
+        $track->message_id = $message_id;
+        $track->save();
+
+        $response = $this->post(action('\jdavidbakr\MailTracker\SNSController@callback'), [
+                'message' => json_encode([
+                        // Required
+                        'Message' => json_encode([
+                            'notificationType' => 'Delivery',
+                            'mail' => [
+                                'timestamp' => \Carbon\Carbon::now()->timestamp,
+                                'messageId' => $message_id,
+                                'source' => $track->sender,
+                                'sourceArn' => Str::random(32),
+                                'sendingAccountId' => Str::random(10),
+                                'destination' => [$track->recipient],
+                            ],
+                            'delivery' => [
+                                "timestamp" => "2014-05-28T22:41:01.184Z",
+                                "processingTimeMillis" => 546,
+                                "recipients" => ["recipient@example.com"],
+                                "smtpResponse" => "250 ok:  Message 64111812 accepted",
+                                "reportingMTA" => "a8-70.smtp-out.amazonses.com",
+                                "remoteMtaIp" => "127.0.2.0"
+                            ],
+                        ]),
+                        'MessageId' => Str::random(10),
+                        'Timestamp' => \Carbon\Carbon::now()->timestamp,
+                        'TopicArn' => Str::random(10),
+                        'Type' => 'Notification',
+                        'Signature' => Str::random(32),
+                        'SigningCertURL' => Str::random(32),
+                        'SignatureVersion' => 1,
+                        // Request-specific
+
+                    ])
+            ]);
+        $response->assertSee('notification processed');
+        $track = $track->fresh();
+        $meta = $track->meta;
+        $this->assertTrue($meta->get('success'));
+        Event::assertDispatched(jdavidbakr\MailTracker\Events\EmailDeliveredEvent::class, function ($event) use ($track) {
+            return $event->email_address == 'recipient@example.com' &&
+                $event->sent_email->hash == $track->hash;
+        });
+    }
+
+    /**
+     * @test
+     */
     public function it_processes_a_bounce()
     {
         Event::fake();
@@ -610,8 +667,9 @@ class MailTrackerTest extends TestCase
         $track = $track->fresh();
         $meta = $track->meta;
         $this->assertFalse($meta->get('success'));
-        Event::assertDispatched(jdavidbakr\MailTracker\Events\PermanentBouncedMessageEvent::class, function ($event) {
-            return $event->email_address == 'recipient@example.com';
+        Event::assertDispatched(jdavidbakr\MailTracker\Events\PermanentBouncedMessageEvent::class, function ($event) use ($track) {
+            return $event->email_address == 'recipient@example.com' &&
+                $event->sent_email->hash == $track->hash;
         });
     }
 
@@ -669,10 +727,11 @@ class MailTrackerTest extends TestCase
         $track = $track->fresh();
         $meta = $track->meta;
         $this->assertFalse($meta->get('success'));
-        Event::assertDispatched(jdavidbakr\MailTracker\Events\ComplaintMessageEvent::class, function ($event) {
-            return $event->email_address == 'recipient@example.com';
+        Event::assertDispatched(jdavidbakr\MailTracker\Events\ComplaintMessageEvent::class, function ($event) use ($track) {
+            return $event->email_address == 'recipient@example.com' &&
+                $event->sent_email->hash == $track->hash;
         });
-    }/** @noinspection ProblematicWhitespace */
+    }
 
     /**
      * @test
