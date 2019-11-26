@@ -9,6 +9,10 @@ MailTracker will hook into all outgoing emails from Laravel and inject a trackin
 
 ## NOTE: For Laravel < 5.3.23 you MUST use version 2.0 or earlier.
 
+## Upgrade from 2.x to 3.x
+
+There was a breaking change with the update to version 3.0, specifically regarding the events that are fired. If you are listening for the `PermanentBouncedMessageEvent` to catch all undeliverables, there are now two separat events: `PermanentBouncedMessageEvent` will be fired _only_ on permanent bounces, and a new event `ComplaintMessageEvent` will be fired on complaints. There is also a new event `EmailDeliveredEvent` that is fired for each successful delivery event. For information about setting up the SES/SNS environment to receive notifications regarding these events, see the documentation below.
+
 ## Upgrade from 2.0 or earlier
 
 First, upgrade to version 2.2 by running:
@@ -86,6 +90,7 @@ When an email is sent, viewed, or a link is clicked, its tracking information is
 -   jdavidbakr\MailTracker\Events\LinkClickedEvent
 
 If you are using the Amazon SNS notification system, these events are fired so you can do additional processing.
+
 -   jdavidbakr\MailTracker\Events\EmailDeliveredEvent (when you received a "message delivered" event, you may want to mark the email as "good" or "delivered" in your database)
 -   jdavidbakr\MailTracker\Events\ComplaintMessageEvent (when you received a complaint, ex: marked as "spam", you may want to remove the email from your database)
 -   jdavidbakr\MailTracker\Events\PermanentBouncedMessageEvent (when you receive a permanent bounce, you may want to mark the email as bad or remove it from your database)
