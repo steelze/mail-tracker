@@ -11,6 +11,7 @@ use Aws\Sns\Message as SNSMessage;
 use Illuminate\Routing\Controller;
 use jdavidbakr\MailTracker\Model\SentEmail;
 use jdavidbakr\MailTracker\RecordBounceJob;
+use jdavidbakr\MailTracker\RecordComplaintJob;
 use Aws\Sns\MessageValidator as SNSMessageValidator;
 use jdavidbakr\MailTracker\Events\EmailDeliveredEvent;
 use jdavidbakr\MailTracker\Events\ComplaintMessageEvent;
@@ -91,22 +92,6 @@ class SNSController extends Controller
 
     public function process_complaint($message)
     {
-        $sent_email = SentEmail::where('message_id', $message->mail->messageId)->first();
-        if ($sent_email) {
-            $meta = collect($sent_email->meta);
-            $meta->put('complaint', true);
-            $meta->put('success', false);
-            $meta->put('complaint_time', $message->complaint->timestamp);
-            if (!empty($message->complaint->complaintFeedbackType)) {
-                $meta->put('complaint_type', $message->complaint->complaintFeedbackType);
-            }
-            $meta->put('sns_message_complaint', $message); // append the full message received from SNS to the 'meta' field
-            $sent_email->meta = $meta;
-            $sent_email->save();
-        }
-
-        foreach ($message->complaint->complainedRecipients as $recipient) {
-            Event::dispatch(new ComplaintMessageEvent($recipient->emailAddress, $sent_email));
-        }
+        RecordComplaintJob::dispatch($message);
     }
 }

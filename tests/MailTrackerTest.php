@@ -18,6 +18,7 @@ use Illuminate\Mail\MailServiceProvider;
 use jdavidbakr\MailTracker\Model\SentEmail;
 use jdavidbakr\MailTracker\RecordBounceJob;
 use Orchestra\Testbench\Exceptions\Handler;
+use jdavidbakr\MailTracker\RecordComplaintJob;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use jdavidbakr\MailTracker\Events\EmailSentEvent;
 use jdavidbakr\MailTracker\Events\ViewEmailEvent;
@@ -609,58 +610,28 @@ class MailTrackerTest extends SetUpTest
      */
     public function it_processes_a_complaint()
     {
-        Event::fake();
-        $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
-                'hash' => Str::random(32),
-            ]);
-        $message_id = Str::random(32);
-        $track->message_id = $message_id;
-        $track->save();
+        $this->disableExceptionHandling();
+        Bus::fake();
+        $message = [
+            'notificationType' => 'Complaint',
+        ];
 
         $response = $this->post(action('\jdavidbakr\MailTracker\SNSController@callback'), [
                 'message' => json_encode([
-                        // Required
-                        'Message' => json_encode([
-                            'notificationType' => 'Complaint',
-                            'mail' => [
-                                'timestamp' => \Carbon\Carbon::now()->timestamp,
-                                'messageId' => $message_id,
-                                'source' => $track->sender,
-                                'sourceArn' => Str::random(32),
-                                'sendingAccountId' => Str::random(10),
-                                'destination' => [$track->recipient],
-                            ],
-                            'complaint' => [
-                                'complainedRecipients' => [
-                                    [
-                                        'emailAddress' => 'recipient@example.com',
-                                    ],
-                                ],
-                                'timestamp' => \Carbon\Carbon::now()->timestamp,
-                                'feedbackId' => Str::random(10),
-                                'userAgent' => Str::random(10),
-                                'complaintFeedbackType' => 'feedback type',
-                                'arrivalDate' => \Carbon\Carbon::now(),
-                            ],
-                        ]),
-                        'MessageId' => Str::random(10),
-                        'Timestamp' => \Carbon\Carbon::now()->timestamp,
-                        'TopicArn' => Str::random(10),
-                        'Type' => 'Notification',
-                        'Signature' => Str::random(32),
-                        'SigningCertURL' => Str::random(32),
-                        'SignatureVersion' => 1,
-                        // Request-specific
-
-                    ])
+                    'Message' => json_encode($message),
+                    'MessageId' => Str::uuid(),
+                    'Timestamp' => Carbon::now()->timestamp,
+                    'TopicArn' => Str::uuid(),
+                    'Type' => 'Notification',
+                    'Signature' => Str::uuid(),
+                    'SigningCertURL' => Str::uuid(),
+                    'SignatureVersion' => Str::uuid(),
+                ])
             ]);
+
         $response->assertSee('notification processed');
-        $track = $track->fresh();
-        $meta = $track->meta;
-        $this->assertFalse($meta->get('success'));
-        Event::assertDispatched(ComplaintMessageEvent::class, function ($event) use ($track) {
-            return $event->email_address == 'recipient@example.com' &&
-                $event->sent_email->hash == $track->hash;
+        Bus::assertDispatched(RecordComplaintJob::class, function ($job) use ($message) {
+            return $job->message == (object)$message;
         });
     }
 
