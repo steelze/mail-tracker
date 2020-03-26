@@ -4,6 +4,7 @@ namespace jdavidbakr\MailTracker\Tests;
 
 use Mockery;
 use Exception;
+use Throwable;
 use Faker\Factory;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
@@ -38,10 +39,10 @@ class IgnoreExceptions extends Handler
     public function __construct()
     {
     }
-    public function report(Exception $e)
+    public function report(Throwable $e)
     {
     }
-    public function render($request, Exception $e)
+    public function render($request, Throwable $e)
     {
         throw $e;
     }
@@ -131,45 +132,6 @@ class MailTrackerTest extends SetUpTest
     public function it_doesnt_track_if_told_not_to()
     {
         Event::fake();
-
-        $faker = Factory::create();
-        $email = $faker->email;
-        $subject = $faker->sentence;
-        $name = $faker->firstName . ' ' .$faker->lastName;
-        \View::addLocation(__DIR__);
-        \Mail::send('email.test', [], function ($message) use ($email, $subject, $name) {
-            $message->from('from@johndoe.com', 'From Name');
-            $message->sender('sender@johndoe.com', 'Sender Name');
-
-            $message->to($email, $name);
-
-            $message->cc('cc@johndoe.com', 'CC Name');
-            $message->bcc('bcc@johndoe.com', 'BCC Name');
-
-            $message->replyTo('reply-to@johndoe.com', 'Reply-To Name');
-
-            $message->subject($subject);
-
-            $message->priority(3);
-
-            $message->getHeaders()->addTextHeader('X-No-Track', Str::random(10));
-        });
-
-        $this->assertDatabaseMissing('sent_emails', [
-                'recipient' => $name.' <'.$email.'>',
-                'subject' => $subject,
-                'sender' => 'From Name <from@johndoe.com>',
-                'recipient' => "{$name} <{$email}>",
-            ]);
-    }
-
-    /**
-     * @test
-     */
-    public function no_track_doesnt_crash_ses()
-    {
-        Event::fake();
-        Config::set('mail.driver', 'ses');
 
         $faker = Factory::create();
         $email = $faker->email;
@@ -563,9 +525,9 @@ class MailTrackerTest extends SetUpTest
         $email = $faker->email;
         $subject = $faker->sentence;
         $name = $faker->firstName . ' ' .$faker->lastName;
-        \View::addLocation(__DIR__);
+        View::addLocation(__DIR__);
 
-        \Mail::send('email.testAmpersand', [], function ($message) use ($email, $subject, $name) {
+        Mail::send('email.testAmpersand', [], function ($message) use ($email, $subject, $name) {
             $message->from('from@johndoe.com', 'From Name');
             $message->sender('sender@johndoe.com', 'Sender Name');
 
@@ -580,8 +542,7 @@ class MailTrackerTest extends SetUpTest
 
             $message->priority(3);
         });
-
-        $driver = $this->app['swift.transport']->driver();
+        $driver = app('mailer')->getSwiftMailer()->getTransport();
         $this->assertEquals(1, count($driver->messages()));
 
         $mes = $driver->messages()[0];

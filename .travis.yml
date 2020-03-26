@@ -6,26 +6,11 @@ cache:
         - $HOME/.composer/cache/files
 
 php:
-    - 7.1
     - 7.2
     - 7.3
 
 env:
-    - LARAVEL_VERSION=5.7.*
-    - LARAVEL_VERSION=5.8.* COVERAGE=true
-    - LARAVEL_VERSION=6.0.* COVERAGE=true
-
-matrix:
-    # For each PHP version we exclude the coverage env, except for PHP 7.1
-    exclude:
-        - php: 7.1
-          env: LARAVEL_VERSION=6.0.* COVERAGE=true
-        - php: 7.1
-          env: LARAVEL_VERSION=7.0.* COVERAGE=true
-        - php: 7.2
-          env: LARAVEL_VERSION=6.0.* COVERAGE=true
-        - php: 7.2
-          env: LARAVEL_VERSION=5.7.*
+    - LARAVEL_VERSION=7.0.* COVERAGE=true
 
 before_install:
     - echo "memory_limit=2G" >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini

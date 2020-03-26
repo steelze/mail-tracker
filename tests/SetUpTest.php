@@ -13,7 +13,7 @@ abstract class SetUpTest extends TestCase
     {
         parent::setUp();
 
-        $this->artisan('migrate', ['--database' => 'testing']);
+        $this->artisan('migrate', ['--database' => 'testbench']);
 
         return;
     }
