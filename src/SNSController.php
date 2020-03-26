@@ -2,18 +2,19 @@
 
 namespace jdavidbakr\MailTracker;
 
-use Illuminate\Http\Request;
+use Event;
 
 use App\Http\Requests;
-use Illuminate\Routing\Controller;
-use Event;
-use jdavidbakr\MailTracker\Model\SentEmail;
-use jdavidbakr\MailTracker\Events\EmailDeliveredEvent;
-use jdavidbakr\MailTracker\Events\PermanentBouncedMessageEvent;
-use jdavidbakr\MailTracker\Events\ComplaintMessageEvent;
-use Aws\Sns\Message as SNSMessage;
-use Aws\Sns\MessageValidator as SNSMessageValidator;
+use Illuminate\Http\Request;
 use GuzzleHttp\Client as Guzzle;
+use Aws\Sns\Message as SNSMessage;
+use Illuminate\Routing\Controller;
+use jdavidbakr\MailTracker\Model\SentEmail;
+use jdavidbakr\MailTracker\RecordBounceJob;
+use Aws\Sns\MessageValidator as SNSMessageValidator;
+use jdavidbakr\MailTracker\Events\EmailDeliveredEvent;
+use jdavidbakr\MailTracker\Events\ComplaintMessageEvent;
+use jdavidbakr\MailTracker\Events\PermanentBouncedMessageEvent;
 
 class SNSController extends Controller
 {
@@ -25,7 +26,7 @@ class SNSController extends Controller
             $message = new SNSMessage(json_decode($request->message, true));
         } else {
             $message = SNSMessage::fromRawPostData();
-            $validator = new SNSMessageValidator();
+            $validator = app(SNSMessageValidator::class);
             $validator->validate($message);
         }
         // If we have a topic defined, make sure this is that topic
@@ -85,28 +86,7 @@ class SNSController extends Controller
 
     public function process_bounce($message)
     {
-        $sent_email = SentEmail::where('message_id', $message->mail->messageId)->first();
-        if ($sent_email) {
-            $meta = collect($sent_email->meta);
-            $current_codes = [];
-            if ($meta->has('failures')) {
-                $current_codes = $meta->get('failures');
-            }
-            foreach ($message->bounce->bouncedRecipients as $failure_details) {
-                $current_codes[] = $failure_details;
-            }
-            $meta->put('failures', $current_codes);
-            $meta->put('success', false);
-            $meta->put('sns_message_bounce', $message); // append the full message received from SNS to the 'meta' field
-            $sent_email->meta = $meta;
-            $sent_email->save();
-        }
-
-        if ($message->bounce->bounceType == 'Permanent') {
-            foreach ($message->bounce->bouncedRecipients as $recipient) {
-                Event::dispatch(new PermanentBouncedMessageEvent($recipient->emailAddress, $sent_email));
-            }
-        }
+        RecordBounceJob::dispatch($message);
     }
 
     public function process_complaint($message)

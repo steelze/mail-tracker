@@ -35,7 +35,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "jdavidbakr\\MailTracker\\": "tests"
+            "jdavidbakr\\MailTracker\\Tests\\": "tests"
         }
     },
     "scripts": {
