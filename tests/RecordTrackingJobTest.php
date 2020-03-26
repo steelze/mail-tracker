@@ -7,34 +7,33 @@ use Illuminate\Support\Facades\Event;
 use jdavidbakr\MailTracker\Model\SentEmail;
 use jdavidbakr\MailTracker\RecordBounceJob;
 use jdavidbakr\MailTracker\RecordDeliveryJob;
+use jdavidbakr\MailTracker\RecordTrackingJob;
 use jdavidbakr\MailTracker\RecordComplaintJob;
 use jdavidbakr\MailTracker\RecordLinkClickJob;
+use jdavidbakr\MailTracker\Events\ViewEmailEvent;
 use jdavidbakr\MailTracker\Events\LinkClickedEvent;
 
-class RecordLinkClickJobTest extends SetUpTest
+class RecordTrackingJobTest extends SetUpTest
 {
     /**
      * @test
      */
-    public function it_records_clicks_to_links()
+    public function it_records_views()
     {
         Event::fake();
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
                 'hash' => Str::random(32),
             ]);
-        $clicks = $track->clicks;
-        $clicks++;
-        $redirect = 'http://'.Str::random(15).'.com/'.Str::random(10).'/'.Str::random(10).'/'.rand(0, 100).'/'.rand(0, 100).'?page='.rand(0, 100).'&x='.Str::random(32);
-        $job = new RecordLinkClickJob($track, $redirect);
+        $job = new RecordTrackingJob($track);
         
         $job->handle();
 
-        Event::assertDispatched(LinkClickedEvent::class, function ($e) use ($track) {
+        Event::assertDispatched(ViewEmailEvent::class, function ($e) use ($track) {
             return $track->id == $e->sent_email->id;
         });
-        $this->assertDatabaseHas('sent_emails_url_clicked', [
-                'url' => $redirect,
-                'clicks' => 1,
+        $this->assertDatabaseHas('sent_emails', [
+                'id' => $track->id,
+                'opens' => 1,
             ]);
     }
 }

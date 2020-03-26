@@ -19,6 +19,7 @@ use jdavidbakr\MailTracker\Model\SentEmail;
 use jdavidbakr\MailTracker\RecordBounceJob;
 use Orchestra\Testbench\Exceptions\Handler;
 use jdavidbakr\MailTracker\RecordDeliveryJob;
+use jdavidbakr\MailTracker\RecordTrackingJob;
 use jdavidbakr\MailTracker\RecordComplaintJob;
 use jdavidbakr\MailTracker\RecordLinkClickJob;
 use Illuminate\Contracts\Debug\ExceptionHandler;
@@ -206,50 +207,43 @@ class MailTrackerTest extends SetUpTest
      */
     public function testPing()
     {
+        $this->disableExceptionHandling();
+        Bus::fake();
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
                 'hash' => Str::random(32),
             ]);
-
-        Event::fake();
-
         $pings = $track->opens;
         $pings++;
-
         $url = route('mailTracker_t', [$track->hash]);
+
         $response = $this->get($url);
 
-        $track = $track->fresh();
-        $this->assertEquals($pings, $track->opens);
-
-        Event::assertDispatched(ViewEmailEvent::class);
+        $response->assertSuccessful();
+        Bus::assertDispatched(RecordTrackingJob::class, function ($e) use ($track) {
+            return $e->sentEmail->id == $track->id;
+        });
     }
 
     public function testLegacyLink()
     {
+        Bus::fake();
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
                 'hash' => Str::random(32),
             ]);
-
-        Event::fake();
-
         $clicks = $track->clicks;
         $clicks++;
-
         $redirect = 'http://'.Str::random(15).'.com/'.Str::random(10).'/'.Str::random(10).'/'.rand(0, 100).'/'.rand(0, 100).'?page='.rand(0, 100).'&x='.Str::random(32);
-
         $url = route('mailTracker_l', [
                 MailTracker::hash_url($redirect), // Replace slash with dollar sign
                 $track->hash
             ]);
         $response = $this->get($url);
+
         $response->assertRedirect($redirect);
-
-        Event::assertDispatched(LinkClickedEvent::class);
-
-        $this->assertDatabaseHas('sent_emails_url_clicked', [
-                'url' => $redirect,
-                'clicks' => 1,
-            ]);
+        Bus::assertDispatched(RecordLinkClickJob::class, function ($job) use ($track, $redirect) {
+            return $job->sentEmail->id == $track->id &&
+                $job->url == $redirect;
+        });
     }
 
     public function testLink()

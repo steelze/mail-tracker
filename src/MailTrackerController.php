@@ -8,6 +8,7 @@ use App\Http\Requests;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use jdavidbakr\MailTracker\RecordTrackingJob;
 use jdavidbakr\MailTracker\RecordLinkClickJob;
 use jdavidbakr\MailTracker\Events\ViewEmailEvent;
 use jdavidbakr\MailTracker\Exceptions\BadUrlLink;
@@ -30,9 +31,7 @@ class MailTrackerController extends Controller
         $tracker = Model\SentEmail::where('hash', $hash)
             ->first();
         if ($tracker) {
-            $tracker->opens++;
-            $tracker->save();
-            Event::dispatch(new ViewEmailEvent($tracker));
+            RecordTrackingJob::dispatch($tracker);
         }
 
         return $response;
