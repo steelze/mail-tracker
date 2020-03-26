@@ -14,7 +14,6 @@ env:
     - LARAVEL_VERSION=5.7.*
     - LARAVEL_VERSION=5.8.* COVERAGE=true
     - LARAVEL_VERSION=6.0.* COVERAGE=true
-    - LARAVEL_VERSION=7.0.* COVERAGE=true
 
 matrix:
     # For each PHP version we exclude the coverage env, except for PHP 7.1
