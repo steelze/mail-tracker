@@ -25,6 +25,8 @@ matrix:
           env: LARAVEL_VERSION=7.0.* COVERAGE=true
         - php: 7.2
           env: LARAVEL_VERSION=6.0.* COVERAGE=true
+        - php: 7.2
+          env: LARAVEL_VERSION=5.7.*
 
 before_install:
     - echo "memory_limit=2G" >> ~/.phpenv/versions/$(phpenv version-name)/etc/conf.d/travis.ini
