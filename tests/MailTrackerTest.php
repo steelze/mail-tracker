@@ -20,6 +20,7 @@ use jdavidbakr\MailTracker\RecordBounceJob;
 use Orchestra\Testbench\Exceptions\Handler;
 use jdavidbakr\MailTracker\RecordDeliveryJob;
 use jdavidbakr\MailTracker\RecordComplaintJob;
+use jdavidbakr\MailTracker\RecordLinkClickJob;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use jdavidbakr\MailTracker\Events\EmailSentEvent;
 use jdavidbakr\MailTracker\Events\ViewEmailEvent;
@@ -253,30 +254,23 @@ class MailTrackerTest extends SetUpTest
 
     public function testLink()
     {
+        Bus::fake();
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
                 'hash' => Str::random(32),
             ]);
-
-        Event::fake();
-
-        $clicks = $track->clicks;
-        $clicks++;
-
         $redirect = 'http://'.Str::random(15).'.com/'.Str::random(10).'/'.Str::random(10).'/'.rand(0, 100).'/'.rand(0, 100).'?page='.rand(0, 100).'&x='.Str::random(32);
-
         $url = route('mailTracker_n', [
                 'l' => $redirect,
                 'h' => $track->hash
             ]);
+            
         $response = $this->get($url);
+
         $response->assertRedirect($redirect);
-
-        Event::assertDispatched(LinkClickedEvent::class);
-
-        $this->assertDatabaseHas('sent_emails_url_clicked', [
-                'url' => $redirect,
-                'clicks' => 1,
-            ]);
+        Bus::assertDispatched(RecordLinkClickJob::class, function ($job) use ($track, $redirect) {
+            return $job->sentEmail->id == $track->id &&
+                $job->url == $redirect;
+        });
     }
 
     /**

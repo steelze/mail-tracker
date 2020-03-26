@@ -8,7 +8,7 @@ use App\Http\Requests;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-
+use jdavidbakr\MailTracker\RecordLinkClickJob;
 use jdavidbakr\MailTracker\Events\ViewEmailEvent;
 use jdavidbakr\MailTracker\Exceptions\BadUrlLink;
 use jdavidbakr\MailTracker\Events\LinkClickedEvent;
@@ -59,21 +59,7 @@ class MailTrackerController extends Controller
         $tracker = Model\SentEmail::where('hash', $hash)
             ->first();
         if ($tracker) {
-            $tracker->clicks++;
-            $tracker->save();
-            $url_clicked = Model\SentEmailUrlClicked::where('url', $url)->where('hash', $hash)->first();
-            if ($url_clicked) {
-                $url_clicked->clicks++;
-                $url_clicked->save();
-            } else {
-                $url_clicked = Model\SentEmailUrlClicked::create([
-                    'sent_email_id' => $tracker->id,
-                    'url' => $url,
-                    'hash' => $tracker->hash,
-                ]);
-            }
-            Event::dispatch(new LinkClickedEvent($tracker));
-
+            RecordLinkClickJob::dispatch($tracker, $url);
             return redirect($url);
         }
 
