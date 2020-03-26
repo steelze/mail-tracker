@@ -83,7 +83,9 @@ When you are in a dev environment (i.e. using the `.test` domain with Valet, or 
 
 ## Events
 
-When an email is sent, viewed, or a link is clicked, its tracking information is counted in the database using the jdavidbakr\MailTracker\Model\SentEmail model. You may want to do additional processing on these events, so an event is fired in these cases:
+When an email is sent, viewed, or a link is clicked, its tracking information is counted in the database using the jdavidbakr\MailTracker\Model\SentEmail model. This processing is done via dispatched jobs to the default queue in order to prevent the database from being overwhelmed is an email blast situation.
+
+You may want to do additional processing on these events, so an event is fired in these cases:
 
 -   jdavidbakr\MailTracker\Events\EmailSentEvent
 -   jdavidbakr\MailTracker\Events\ViewEmailEvent
