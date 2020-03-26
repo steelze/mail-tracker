@@ -11,6 +11,7 @@ use Aws\Sns\Message as SNSMessage;
 use Illuminate\Routing\Controller;
 use jdavidbakr\MailTracker\Model\SentEmail;
 use jdavidbakr\MailTracker\RecordBounceJob;
+use jdavidbakr\MailTracker\RecordDeliveryJob;
 use jdavidbakr\MailTracker\RecordComplaintJob;
 use Aws\Sns\MessageValidator as SNSMessageValidator;
 use jdavidbakr\MailTracker\Events\EmailDeliveredEvent;
@@ -69,20 +70,7 @@ class SNSController extends Controller
 
     protected function process_delivery($message)
     {
-        $sent_email = SentEmail::where('message_id', $message->mail->messageId)->first();
-        if ($sent_email) {
-            $meta = collect($sent_email->meta);
-            $meta->put('smtpResponse', $message->delivery->smtpResponse);
-            $meta->put('success', true);
-            $meta->put('delivered_at', $message->delivery->timestamp);
-            $meta->put('sns_message_delivery', $message); // append the full message received from SNS to the 'meta' field
-            $sent_email->meta = $meta;
-            $sent_email->save();
-        }
-
-        foreach ($message->delivery->recipients as $recipient) {
-            Event::dispatch(new EmailDeliveredEvent($recipient, $sent_email));
-        }
+        RecordDeliveryJob::dispatch($message);
     }
 
     public function process_bounce($message)

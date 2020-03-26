@@ -18,6 +18,7 @@ use Illuminate\Mail\MailServiceProvider;
 use jdavidbakr\MailTracker\Model\SentEmail;
 use jdavidbakr\MailTracker\RecordBounceJob;
 use Orchestra\Testbench\Exceptions\Handler;
+use jdavidbakr\MailTracker\RecordDeliveryJob;
 use jdavidbakr\MailTracker\RecordComplaintJob;
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use jdavidbakr\MailTracker\Events\EmailSentEvent;
@@ -473,106 +474,28 @@ class MailTrackerTest extends SetUpTest
      */
     public function it_processes_a_delivery()
     {
-        $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
-                'hash' => Str::random(32),
-            ]);
-        $message_id = Str::random(32);
-        $track->message_id = $message_id;
-        $track->save();
-
-        $response = $this->post(action('\jdavidbakr\MailTracker\SNSController@callback'), [
-                'message' => json_encode([
-                        // Required
-                        'Message' => json_encode([
-                            'notificationType' => 'Delivery',
-                            'mail' => [
-                                'timestamp' => \Carbon\Carbon::now()->timestamp,
-                                'messageId' => $message_id,
-                                'source' => $track->sender,
-                                'sourceArn' => Str::random(32),
-                                'sendingAccountId' => Str::random(10),
-                                'destination' => [$track->recipient],
-                            ],
-                            'delivery' => [
-                                'timestamp' => \Carbon\Carbon::now()->timestamp,
-                                'processingTimeMillis' => 1000,
-                                'recipients' => [$track->recipient],
-                                'smtpResponse' => 'test smtp response',
-                                'reportingMTA' => Str::random(10),
-                            ],
-                        ]),
-                        'MessageId' => Str::random(10),
-                        'Timestamp' => \Carbon\Carbon::now()->timestamp,
-                        'TopicArn' => Str::random(10),
-                        'Type' => 'Notification',
-                        'Signature' => Str::random(32),
-                        'SigningCertURL' => Str::random(32),
-                        'SignatureVersion' => 1,
-                        // Request-specific
-
-                    ])
-            ]);
-        $response->assertSee('notification processed');
-        $track = $track->fresh();
-        $meta = $track->meta;
-        $this->assertEquals('test smtp response', $meta->get('smtpResponse'));
-        $this->assertTrue($meta->get('success'));
-    }
-
-    /**
-     * @test
-     */
-    public function it_processes_a_successful_delivery()
-    {
         $this->disableExceptionHandling();
-        Event::fake();
-        $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
-                'hash' => Str::random(32),
-            ]);
-        $message_id = Str::random(32);
-        $track->message_id = $message_id;
-        $track->save();
+        Bus::fake();
+        $message = [
+            'notificationType' => 'Delivery',
+        ];
 
         $response = $this->post(action('\jdavidbakr\MailTracker\SNSController@callback'), [
                 'message' => json_encode([
-                        // Required
-                        'Message' => json_encode([
-                            'notificationType' => 'Delivery',
-                            'mail' => [
-                                'timestamp' => \Carbon\Carbon::now()->timestamp,
-                                'messageId' => $message_id,
-                                'source' => $track->sender,
-                                'sourceArn' => Str::random(32),
-                                'sendingAccountId' => Str::random(10),
-                                'destination' => [$track->recipient],
-                            ],
-                            'delivery' => [
-                                "timestamp" => "2014-05-28T22:41:01.184Z",
-                                "processingTimeMillis" => 546,
-                                "recipients" => ["recipient@example.com"],
-                                "smtpResponse" => "250 ok:  Message 64111812 accepted",
-                                "reportingMTA" => "a8-70.smtp-out.amazonses.com",
-                                "remoteMtaIp" => "127.0.2.0"
-                            ],
-                        ]),
-                        'MessageId' => Str::random(10),
-                        'Timestamp' => \Carbon\Carbon::now()->timestamp,
-                        'TopicArn' => Str::random(10),
-                        'Type' => 'Notification',
-                        'Signature' => Str::random(32),
-                        'SigningCertURL' => Str::random(32),
-                        'SignatureVersion' => 1,
-                        // Request-specific
-
-                    ])
+                    'Message' => json_encode($message),
+                    'MessageId' => Str::uuid(),
+                    'Timestamp' => Carbon::now()->timestamp,
+                    'TopicArn' => Str::uuid(),
+                    'Type' => 'Notification',
+                    'Signature' => Str::uuid(),
+                    'SigningCertURL' => Str::uuid(),
+                    'SignatureVersion' => Str::uuid(),
+                ])
             ]);
+
         $response->assertSee('notification processed');
-        $track = $track->fresh();
-        $meta = $track->meta;
-        $this->assertTrue($meta->get('success'));
-        Event::assertDispatched(EmailDeliveredEvent::class, function ($event) use ($track) {
-            return $event->email_address == 'recipient@example.com' &&
-                $event->sent_email->hash == $track->hash;
+        Bus::assertDispatched(RecordDeliveryJob::class, function ($job) use ($message) {
+            return $job->message == (object)$message;
         });
     }
 
