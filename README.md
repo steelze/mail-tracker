@@ -9,6 +9,10 @@ MailTracker will hook into all outgoing emails from Laravel and inject a trackin
 
 ## NOTE: For Laravel < 5.3.23 you MUST use version 2.0 or earlier.
 
+## Upgrade from 3.x to 4.x
+
+There are no breaking changes from 3.x to 4.x with the exception that 4.x is for Laravel 7+ only.
+
 ## Upgrade from 2.x to 3.x
 
 There was a breaking change with the update to version 3.0, specifically regarding the events that are fired. If you are listening for the `PermanentBouncedMessageEvent` to catch all undeliverables, there are now two separat events: `PermanentBouncedMessageEvent` will be fired _only_ on permanent bounces, and a new event `ComplaintMessageEvent` will be fired on complaints. There is also a new event `EmailDeliveredEvent` that is fired for each successful delivery event. For information about setting up the SES/SNS environment to receive notifications regarding these events, see the documentation below.
