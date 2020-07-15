@@ -69,6 +69,11 @@ class MailTrackerTest extends SetUpTest
             ]);
         // Go into the future to make sure that the old email gets removed
         \Carbon\Carbon::setTestNow(\Carbon\Carbon::now()->addWeek());
+        $str = Mockery::mock(Str::class);
+        app()->instance(Str::class, $str);
+        $str->shouldReceive('random')
+            ->once()
+            ->andReturn('random-hash');
 
         Event::fake();
 
@@ -99,6 +104,7 @@ class MailTrackerTest extends SetUpTest
         Event::assertDispatched(EmailSentEvent::class);
 
         $this->assertDatabaseHas('sent_emails', [
+                'hash' => 'random-hash',
                 'recipient' => $name.' <'.$email.'>',
                 'subject' => $subject,
                 'sender' => 'From Name <from@johndoe.com>',
@@ -115,6 +121,11 @@ class MailTrackerTest extends SetUpTest
         $name = $faker->firstName . ' ' .$faker->lastName;
         $content = 'Text to e-mail';
         View::addLocation(__DIR__);
+        $str = Mockery::mock(Str::class);
+        app()->instance(Str::class, $str);
+        $str->shouldReceive('random')
+            ->once()
+            ->andReturn('random-hash');
 
         try {
             Mail::raw($content, function ($message) use ($email, $name) {
@@ -126,6 +137,7 @@ class MailTrackerTest extends SetUpTest
         }
 
         $this->assertDatabaseHas('sent_emails', [
+            'hash' => 'random-hash',
             'recipient' => $name.' <'.$email.'>',
             'sender' => 'From Name <from@johndoe.com>',
             'recipient' => "{$name} <{$email}>",
@@ -179,7 +191,6 @@ class MailTrackerTest extends SetUpTest
      */
     public function testPing()
     {
-        $this->disableExceptionHandling();
         Bus::fake();
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
                 'hash' => Str::random(32),
@@ -355,6 +366,12 @@ class MailTrackerTest extends SetUpTest
      */
     public function it_retrieves_the_mesage_id_from_ses_mail_driver()
     {
+        $str = Mockery::mock(Str::class);
+        app()->instance(Str::class, $str);
+        $str->shouldReceive('random')
+            ->with(32)
+            ->once()
+            ->andReturn('random-hash');
         Config::set('mail.driver', 'ses');
         Config::set('mail.default', null);
         $headers = Mockery::mock();
@@ -362,17 +379,14 @@ class MailTrackerTest extends SetUpTest
             ->with('X-No-Track')
             ->once()
             ->andReturn(null);
-        $this->mailer_hash = '';
         $headers->shouldReceive('addTextHeader')
             ->once()
-            ->andReturnUsing(function ($key, $value) {
-                $this->mailer_hash = $value;
-            });
+            ->with('X-Mailer-Hash', 'random-hash');
         $mailer_hash_header = Mockery::mock();
         $mailer_hash_header->shouldReceive('getFieldBody')
             ->once()
             ->andReturnUsing(function () {
-                return $this->mailer_hash;
+                return 'random-hash';
             });
         $headers->shouldReceive('get')
             ->with('X-Mailer-Hash')
