@@ -191,6 +191,7 @@ class MailTrackerTest extends SetUpTest
      */
     public function testPing()
     {
+        Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
                 'hash' => Str::random(32),
@@ -203,12 +204,14 @@ class MailTrackerTest extends SetUpTest
 
         $response->assertSuccessful();
         Bus::assertDispatched(RecordTrackingJob::class, function ($e) use ($track) {
-            return $e->sentEmail->id == $track->id;
+            return $e->sentEmail->id == $track->id &&
+                $e->queue == 'alt-queue';
         });
     }
 
     public function testLegacyLink()
     {
+        Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
                 'hash' => Str::random(32),
@@ -225,12 +228,14 @@ class MailTrackerTest extends SetUpTest
         $response->assertRedirect($redirect);
         Bus::assertDispatched(RecordLinkClickJob::class, function ($job) use ($track, $redirect) {
             return $job->sentEmail->id == $track->id &&
-                $job->url == $redirect;
+                $job->url == $redirect &&
+                $job->queue == 'alt-queue';
         });
     }
 
     public function testLink()
     {
+        Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
         $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
                 'hash' => Str::random(32),
@@ -246,7 +251,8 @@ class MailTrackerTest extends SetUpTest
         $response->assertRedirect($redirect);
         Bus::assertDispatched(RecordLinkClickJob::class, function ($job) use ($track, $redirect) {
             return $job->sentEmail->id == $track->id &&
-                $job->url == $redirect;
+                $job->url == $redirect &&
+                $job->queue == 'alt-queue';
         });
     }
 
@@ -514,7 +520,7 @@ class MailTrackerTest extends SetUpTest
      */
     public function it_processes_a_delivery()
     {
-        $this->disableExceptionHandling();
+        Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
         $message = [
             'notificationType' => 'Delivery',
@@ -535,7 +541,8 @@ class MailTrackerTest extends SetUpTest
 
         $response->assertSee('notification processed');
         Bus::assertDispatched(RecordDeliveryJob::class, function ($job) use ($message) {
-            return $job->message == (object)$message;
+            return $job->message == (object)$message &&
+                $job->queue == 'alt-queue';
         });
     }
 
@@ -544,6 +551,7 @@ class MailTrackerTest extends SetUpTest
      */
     public function it_processes_a_bounce()
     {
+        Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
         $message = [
             'notificationType' => 'Bounce',
@@ -564,7 +572,8 @@ class MailTrackerTest extends SetUpTest
 
         $response->assertSee('notification processed');
         Bus::assertDispatched(RecordBounceJob::class, function ($job) use ($message) {
-            return $job->message == (object)$message;
+            return $job->message == (object)$message &&
+                $job->queue == 'alt-queue';
         });
     }
 
@@ -573,7 +582,7 @@ class MailTrackerTest extends SetUpTest
      */
     public function it_processes_a_complaint()
     {
-        $this->disableExceptionHandling();
+        Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
         $message = [
             'notificationType' => 'Complaint',
@@ -594,7 +603,8 @@ class MailTrackerTest extends SetUpTest
 
         $response->assertSee('notification processed');
         Bus::assertDispatched(RecordComplaintJob::class, function ($job) use ($message) {
-            return $job->message == (object)$message;
+            return $job->message == (object)$message &&
+                $job->queue == 'alt-queue';
         });
     }
 
