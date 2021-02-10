@@ -9,6 +9,12 @@ MailTracker will hook into all outgoing emails from Laravel and inject a trackin
 
 ## NOTE: For Laravel < 5.3.23 you MUST use version 2.0 or earlier.
 
+## Upgrade from 4.x to 5.x
+
+In 4.x and previous, there was a `recipient` column in the sent_emails table that stored the RFC standard email format `<Name> email@example.com`. 5.x has updated to store the name and email separately. The `recipient` and `sender` columns have been removed from the `sent_emails` table migration, but no migration was added to drop those columns. Accessors have been added to retain the model's `recipient` and `sender` attributes, so no updates should need to be made to any code that currently uses those unless you are specifically querying the `sender` or `recipient` columns.
+
+To retain your existing data afer upgrading, run the artisan command `mail-tracker:migrate-recipients`. This will convert the existing `recipient` and `sender` data into the new format. At this point you may drop the `recipient` and `sender` columns.
+
 ## Upgrade from 3.x to 4.x
 
 There are no breaking changes from 3.x to 4.x with the exception that 4.x is for Laravel 7+ only.

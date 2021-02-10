@@ -106,11 +106,17 @@ class MailTrackerTest extends SetUpTest
 
         $this->assertDatabaseHas('sent_emails', [
                 'hash' => 'random-hash',
-                'recipient' => $name.' <'.$email.'>',
+                'recipient_name' => $name,
+                'recipient_email' => $email,
+                'sender_name' => 'From Name',
+                'sender_email' => 'from@johndoe.com',
                 'subject' => $subject,
-                'sender' => 'From Name <from@johndoe.com>',
-                'recipient' => "{$name} <{$email}>",
             ]);
+        $sent_email = SentEmail::where([
+            'hash' => 'random-hash',
+        ])->first();
+        $this->assertEquals($name.' <'.$email.'>', $sent_email->recipient);
+        $this->assertEquals('From Name <from@johndoe.com>', $sent_email->sender);
         $this->assertNull($old_email->fresh());
         $this->assertNull($old_url->fresh());
     }
@@ -134,14 +140,15 @@ class MailTrackerTest extends SetUpTest
 
                 $message->to($email, $name);
             });
-        } catch (Swift_TransportException $e) {
+        } catch (Exception $e) {
         }
 
         $this->assertDatabaseHas('sent_emails', [
             'hash' => 'random-hash',
-            'recipient' => $name.' <'.$email.'>',
-            'sender' => 'From Name <from@johndoe.com>',
-            'recipient' => "{$name} <{$email}>",
+            'sender_name' => 'From Name',
+            'sender_email' => 'from@johndoe.com',
+            'recipient_name' => $name,
+            'recipient_email' => $email,
             'content' => $content
         ]);
     }
@@ -182,8 +189,10 @@ class MailTrackerTest extends SetUpTest
         $this->assertDatabaseMissing('sent_emails', [
                 'recipient' => $name.' <'.$email.'>',
                 'subject' => $subject,
-                'sender' => 'From Name <from@johndoe.com>',
-                'recipient' => "{$name} <{$email}>",
+                'sender_name' => 'From Name',
+                'sender_email' => 'from@johndoe.com',
+                'recipient_name' => $name,
+                'recipient_email' => $email,
             ]);
     }
 
@@ -822,9 +831,11 @@ class MailTrackerTest extends SetUpTest
         Event::assertDispatched(EmailSentEvent::class);
 
         $this->assertDatabaseHas('sent_emails', [
-            'recipient' => $name.' <'.$email.'>',
+            'recipient_name' => $name,
+            'recipient_email' => $email,
+            'sender_name' => 'From Name',
+            'sender_email' => 'from@johndoe.com',
             'subject' => $subject,
-            'sender' => 'From Name <from@johndoe.com>'
         ], 'secondary');
         $this->assertNull($old_email->fresh());
         $this->assertNull($old_url->fresh());

@@ -21,8 +21,10 @@ class SentEmail extends Model
     protected $fillable = [
         'hash',
         'headers',
-        'sender',
-        'recipient',
+        'sender_name',
+        'sender_email',
+        'recipient_name',
+        'recipient_email',
         'subject',
         'content',
         'opens',
@@ -56,6 +58,16 @@ class SentEmail extends Model
         } else {
             return '';
         }
+    }
+
+    public function getSenderAttribute()
+    {
+        return $this->sender_name.' <'.$this->sender_email.'>';
+    }
+
+    public function getRecipientAttribute()
+    {
+        return $this->recipient_name.' <'.$this->recipient_email.'>';
     }
 
     /**

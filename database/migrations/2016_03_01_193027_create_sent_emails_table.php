@@ -17,8 +17,6 @@ class CreateSentEmailsTable extends Migration
             $table->increments('id');
             $table->char('hash', 32)->unique();
             $table->text('headers')->nullable();
-            $table->string('sender')->nullable();
-            $table->string('recipient')->nullable();
             $table->string('subject')->nullable();
             $table->text('content')->nullable();
             $table->integer('opens')->nullable();
