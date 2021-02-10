@@ -15,10 +15,10 @@ class AddSenderEmailAndNameToSentEmailsTable extends Migration
     public function up()
     {
         Schema::connection((new SentEmail())->getConnectionName())->table('sent_emails', function (Blueprint $table) {
+            $table->string('recipient_email')->nullable()->after('headers');
+            $table->string('recipient_name')->nullable()->after('headers');
+            $table->string('sender_email')->nullable()->after('headers');
             $table->string('sender_name')->nullable()->after('headers');
-            $table->string('sender_email')->nullable()->after('sender_name');
-            $table->string('recipient_name')->nullable()->after('sender_email');
-            $table->string('recipient_email')->nullable()->after('recipient_email');
         });
     }
 
