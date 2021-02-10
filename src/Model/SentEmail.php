@@ -31,10 +31,14 @@ class SentEmail extends Model
         'clicks',
         'message_id',
         'meta',
+        'opened_at',
+        'clicked_at',
     ];
 
     protected $casts = [
         'meta' => 'collection',
+        'opened_at' => 'datetime',
+        'clicked_at' => 'datetime',
     ];
 
     public function getConnectionName()

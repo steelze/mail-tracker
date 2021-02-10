@@ -15,6 +15,8 @@ In 4.x and previous, there was a `recipient` column in the sent_emails table tha
 
 To retain your existing data afer upgrading, run the artisan command `mail-tracker:migrate-recipients`. This will convert the existing `recipient` and `sender` data into the new format. At this point you may drop the `recipient` and `sender` columns.
 
+There is also a new pair of attributes in the `sent_emails` table: `opened_at` and `clicked_at`. Those store the first time the user opened and clicked, respectively. This has been added to the default tracker index page. You are welcome to add it into yours, or use those values as you see fit.
+
 ## Upgrade from 3.x to 4.x
 
 There are no breaking changes from 3.x to 4.x with the exception that 4.x is for Laravel 7+ only.

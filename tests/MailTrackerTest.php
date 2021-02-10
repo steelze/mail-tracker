@@ -111,6 +111,8 @@ class MailTrackerTest extends SetUpTest
                 'sender_name' => 'From Name',
                 'sender_email' => 'from@johndoe.com',
                 'subject' => $subject,
+                'opened_at' => null,
+                'clicked_at' => null,
             ]);
         $sent_email = SentEmail::where([
             'hash' => 'random-hash',
@@ -201,6 +203,7 @@ class MailTrackerTest extends SetUpTest
      */
     public function testPing()
     {
+        Carbon::setTestNow(now());
         Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
         $track = SentEmail::create([
@@ -217,10 +220,44 @@ class MailTrackerTest extends SetUpTest
             return $e->sentEmail->id == $track->id &&
                 $e->queue == 'alt-queue';
         });
+        $this->assertDatabaseHas('sent_emails', [
+            'id' => $track->id,
+            'opened_at' => now()->format("Y-m-d H:i:s"),
+        ]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_leaves_existing_opened_at_value()
+    {
+        Carbon::setTestNow(now());
+        Config::set('mail-tracker.tracker-queue', 'alt-queue');
+        Bus::fake();
+        $track = SentEmail::create([
+                'hash' => Str::random(32),
+                'opened_at' => now()->subDays(10),
+            ]);
+        $pings = $track->opens;
+        $pings++;
+        $url = route('mailTracker_t', [$track->hash]);
+
+        $response = $this->get($url);
+
+        $response->assertSuccessful();
+        Bus::assertDispatched(RecordTrackingJob::class, function ($e) use ($track) {
+            return $e->sentEmail->id == $track->id &&
+                $e->queue == 'alt-queue';
+        });
+        $this->assertDatabaseHas('sent_emails', [
+            'id' => $track->id,
+            'opened_at' => $track->opened_at,
+        ]);
     }
 
     public function testLegacyLink()
     {
+        Carbon::setTestNow(now());
         Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
         $track = SentEmail::create([
@@ -241,10 +278,15 @@ class MailTrackerTest extends SetUpTest
                 $job->url == $redirect &&
                 $job->queue == 'alt-queue';
         });
+        $this->assertDatabaseHas('sent_emails', [
+            'id' => $track->id,
+            'clicked_at' => now()->format("Y-m-d H:i:s"),
+        ]);
     }
 
     public function testLink()
     {
+        Carbon::setTestNow(now());
         Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
         $track = SentEmail::create([
@@ -264,6 +306,10 @@ class MailTrackerTest extends SetUpTest
                 $job->url == $redirect &&
                 $job->queue == 'alt-queue';
         });
+        $this->assertDatabaseHas('sent_emails', [
+            'id' => $track->id,
+            'clicked_at' => now()->format("Y-m-d H:i:s"),
+        ]);
     }
 
     /**
