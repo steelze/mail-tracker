@@ -31,7 +31,7 @@ class MigrateRecipients extends Command
     {
         $bar = optional($this->output)->createProgressBar(SentEmail::count());
         optional($bar)->start();
-        DB::table('sent_emails')->orderBy('id')->chunk(100, function ($emails) use ($bar) {
+        DB::connection((new SentEmail)->getConnectionName())->table('sent_emails')->orderBy('id')->chunk(100, function ($emails) use ($bar) {
             $emails->each(function ($email) use ($bar) {
                 if ($email->recipient_email == null) {
                     $this->migrateEmail($email);
