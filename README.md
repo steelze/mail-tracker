@@ -285,7 +285,7 @@ The MIT License (MIT). Please see [License File](LICENSE.md) for more informatio
 [ico-code-quality]: https://img.shields.io/scrutinizer/g/jdavidbakr/MailTracker.svg?style=flat-square
 [ico-downloads]: https://img.shields.io/packagist/dt/jdavidbakr/mail-tracker.svg?style=flat-square
 [link-packagist]: https://packagist.org/packages/jdavidbakr/mail-tracker
-[link-travis]: https://travis-ci.org/jdavidbakr/mail-tracker
+[link-travis]: https://travis-ci.com/jdavidbakr/mail-tracker
 [link-scrutinizer]: https://scrutinizer-ci.com/g/jdavidbakr/MailTracker/code-structure
 [link-code-quality]: https://scrutinizer-ci.com/g/jdavidbakr/MailTracker
 [link-downloads]: https://packagist.org/packages/jdavidbakr/mail-tracker
