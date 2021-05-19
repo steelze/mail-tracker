@@ -315,10 +315,8 @@ class MailTrackerTest extends SetUpTest
     /**
      * @test
      */
-    public function it_throws_exception_on_invalid_link()
+    public function it_redirects_even_if_no_sent_email_exists()
     {
-        $this->disableExceptionHandling();
-        $this->expectException(BadUrlLink::class);
         $track = SentEmail::create([
                 'hash' => Str::random(32),
             ]);
@@ -337,7 +335,7 @@ class MailTrackerTest extends SetUpTest
             ]);
         $response = $this->get($url);
 
-        $response->assertStatus(500);
+        $response->assertRedirect($redirect);
     }
 
     /**

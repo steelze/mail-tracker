@@ -46,7 +46,7 @@ class MailTrackerController extends Controller
     {
         $url = base64_decode(str_replace("$", "/", $url));
         if (filter_var($url, FILTER_VALIDATE_URL) === false) {
-            throw new BadUrlLink('Mail hash: '.$hash);
+            throw new BadUrlLink('Mail hash: '.$hash.', URL: '.$url);
         }
         return $this->linkClicked($url, $hash);
     }
@@ -69,9 +69,7 @@ class MailTrackerController extends Controller
                 $tracker->clicked_at = now();
                 $tracker->save();
             }
-            return redirect($url);
         }
-
-        throw new BadUrlLink('Mail hash: '.$hash);
+        return redirect($url);
     }
 }
