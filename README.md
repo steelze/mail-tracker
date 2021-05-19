@@ -23,7 +23,7 @@ There are no breaking changes from 3.x to 4.x with the exception that 4.x is for
 
 ## Upgrade from 2.x to 3.x
 
-There was a breaking change with the update to version 3.0, specifically regarding the events that are fired. If you are listening for the `PermanentBouncedMessageEvent` to catch all undeliverables, there are now two separat events: `PermanentBouncedMessageEvent` will be fired _only_ on permanent bounces, and a new event `ComplaintMessageEvent` will be fired on complaints. There is also a new event `EmailDeliveredEvent` that is fired for each successful delivery event. For information about setting up the SES/SNS environment to receive notifications regarding these events, see the documentation below.
+There was a breaking change with the update to version 3.0, specifically regarding the events that are fired. If you are listening for the `PermanentBouncedMessageEvent` to catch all undeliverables, there are now two separate events: `PermanentBouncedMessageEvent` will be fired _only_ on permanent bounces, and a new event `ComplaintMessageEvent` will be fired on complaints. There is also a new event `EmailDeliveredEvent` that is fired for each successful delivery event. For information about setting up the SES/SNS environment to receive notifications regarding these events, see the documentation below.
 
 ## Upgrade from 2.0 or earlier
 
@@ -77,7 +77,7 @@ Once installed, all outgoing mail will be logged to the database. The following 
 -   **admin-route**: The route information for the admin. Set the prefix and middleware.
 -   **admin-template**: The params for the Admin Panel and Views. You can integrate your existing Admin Panel with the MailTracker admin panel.
 -   **date-format**: You can define the format to show dates in the Admin Panel.
--   **content-max-size**: You can overwrite default maximum length limit for `content` database field. Do not forget update it's type from `text` if make it longer.
+-   **content-max-size**: You can overwrite default maximum length limit for `content` database field. Do not forget update it's type from `text` if you need to make it longer.
 
 If you do not wish to have an email tracked, then you can add the `X-No-Track` header to your message. Put any random string into this header to prevent the tracking from occurring. The header will be removed from the email prior to being sent.
 
@@ -90,7 +90,7 @@ If you do not wish to have an email tracked, then you can add the `X-No-Track` h
 
 ## Note on dev testing
 
-Several people have reporting the tracking pixel not working while they were testing. What is happening with the tracking pixel is that the email client is connecting to your website to log the view. In order for this to happen, images have to be visible in the client, and the client has to be able to connect to your server.
+Several people have reported the tracking pixel not working while they were testing. What is happening with the tracking pixel is that the email client is connecting to your website to log the view. In order for this to happen, images have to be visible in the client, and the client has to be able to connect to your server.
 
 When you are in a dev environment (i.e. using the `.test` domain with Valet, or another domain known only to your computer) you must have an email client on your computer. Further complicating this is the fact that Gmail and some other web-based email clients don't connect to the images directly, but instead connect via proxy. That proxy won't have a connection to your `.test` domain and therefore will not properly track emails. I always recommend using [mailtrap.io](https://mailtrap.io) for any development environment when you are sending emails. Not only does this solve the issue (mailtrap.io does not use a proxy service to forward images in the emails) but it also protects you from accidentally sending real emails from your test environment.
 
@@ -243,7 +243,7 @@ Note that the headers you are attaching to the email are actually going out with
 
 The following exceptions may be thrown. You may add them to your ignore list in your exception handler, or handle them as you wish.
 
--   jdavidbakr\MailTracker\Exceptions\BadUrlLink - Something went wrong with the url link. Either the base 64 encoded url is bad (this only applies to mail sent through version 2.1) or the email hash was not found to apply the link to.
+-   jdavidbakr\MailTracker\Exceptions\BadUrlLink - Something went wrong with the url link. Basically, the system could not properly parse the URL link to send the redirect to.
 
 ## Amazon SES features
 
@@ -251,7 +251,7 @@ If you use Amazon SES, you can add some additional information to your tracking.
 
 ## Views
 
-When you do the php artisan vendor:publish simple views will add to your resources/views/vendor/emailTrakingViews and you can customize.
+When you run the `php artisan vendor:publish` command, simple views will add to your resources/views/vendor/emailTrakingViews that you can customize. You of course my build your entire admin pages from scratch using these views as a guide.
 
 ## Admin Panel
 
