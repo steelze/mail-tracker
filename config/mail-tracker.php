@@ -25,6 +25,11 @@ return [
     ],
 
     /**
+     * If we get a link click without a URL, where should we send it to?
+     */
+    'redirect-missing-links-to' => '/',
+
+    /**
      * Where should the admin route be?
      */
     'admin-route' => [

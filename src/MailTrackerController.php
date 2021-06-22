@@ -2,17 +2,18 @@
 
 namespace jdavidbakr\MailTracker;
 
-use Event;
-use Response;
 use App\Http\Requests;
+use Event;
+use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use jdavidbakr\MailTracker\RecordTrackingJob;
-use jdavidbakr\MailTracker\RecordLinkClickJob;
+use jdavidbakr\MailTracker\Events\LinkClickedEvent;
 use jdavidbakr\MailTracker\Events\ViewEmailEvent;
 use jdavidbakr\MailTracker\Exceptions\BadUrlLink;
-use jdavidbakr\MailTracker\Events\LinkClickedEvent;
+use jdavidbakr\MailTracker\RecordLinkClickJob;
+use jdavidbakr\MailTracker\RecordTrackingJob;
+use Response;
 
 class MailTrackerController extends Controller
 {
@@ -60,6 +61,9 @@ class MailTrackerController extends Controller
 
     protected function linkClicked($url, $hash)
     {
+        if (!$url) {
+            $url = config('mail-tracker.redirect-missing-links-to') ?: '/';
+        }
         $tracker = Model\SentEmail::where('hash', $hash)
             ->first();
         if ($tracker) {
