@@ -23,7 +23,7 @@ There are no breaking changes from 3.x to 4.x with the exception that 4.x is for
 
 ## Upgrade from 2.x to 3.x
 
-There was a breaking change with the update to version 3.0, specifically regarding the events that are fired. If you are listening for the `PermanentBouncedMessageEvent` to catch all undeliverables, there are now two separate events: `PermanentBouncedMessageEvent` will be fired _only_ on permanent bounces, and a new event `ComplaintMessageEvent` will be fired on complaints. There is also a new event `EmailDeliveredEvent` that is fired for each successful delivery event. For information about setting up the SES/SNS environment to receive notifications regarding these events, see the documentation below.
+There was a breaking change with the update to version 3.0, specifically regarding the events that are fired. If you are listening for the `PermanentBouncedMessageEvent` to catch all undeliverables, there are now two separate events: `PermanentBouncedMessageEvent` will be fired _only_ on permanent bounces, and a new event `ComplaintMessageEvent` will be fired on complaints. There is also an new event `EmailDeliveredEvent` that is fired for each successful delivery event. For information about setting up the SES/SNS environment to receive notifications regarding these events, see the documentation below.
 
 ## Upgrade from 2.0 or earlier
 
@@ -109,6 +109,7 @@ If you are using the Amazon SNS notification system, these events are fired so y
 -   jdavidbakr\MailTracker\Events\EmailDeliveredEvent (when you received a "message delivered" event, you may want to mark the email as "good" or "delivered" in your database)
 -   jdavidbakr\MailTracker\Events\ComplaintMessageEvent (when you received a complaint, ex: marked as "spam", you may want to remove the email from your database)
 -   jdavidbakr\MailTracker\Events\PermanentBouncedMessageEvent (when you receive a permanent bounce, you may want to mark the email as bad or remove it from your database)
+    jdavidbakr\MailTracker\Events\TransientBouncedMessageEvent (when you receive a transient bounce.  Check the event's public attributes for `bounce_sub_type` and `diagnostic_code` to determine if you want to do additional processing when this event is received.)
 
 To install an event listener, you will want to create a file like the following:
 

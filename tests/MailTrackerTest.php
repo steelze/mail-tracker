@@ -20,7 +20,6 @@ use jdavidbakr\MailTracker\Events\ComplaintMessageEvent;
 use jdavidbakr\MailTracker\Events\EmailDeliveredEvent;
 use jdavidbakr\MailTracker\Events\EmailSentEvent;
 use jdavidbakr\MailTracker\Events\LinkClickedEvent;
-use jdavidbakr\MailTracker\Events\PermanentBouncedMessageEvent;
 use jdavidbakr\MailTracker\Events\ViewEmailEvent;
 use jdavidbakr\MailTracker\Exceptions\BadUrlLink;
 use jdavidbakr\MailTracker\MailTracker;
