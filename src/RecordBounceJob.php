@@ -70,7 +70,7 @@ class RecordBounceJob implements ShouldQueue
             Event::dispatch(new TransientBouncedMessageEvent(
                 $recipient->emailAddress,
                 $this->message->bounce->bounceSubType,
-                $recipient->diagnosticCode,
+                optional($recipient)->diagnosticCode ?: '',
                 $sent_email
             ));
         }
