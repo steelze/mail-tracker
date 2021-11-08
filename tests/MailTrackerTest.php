@@ -218,6 +218,7 @@ class MailTrackerTest extends SetUpTest
         $response->assertSuccessful();
         Bus::assertDispatched(RecordTrackingJob::class, function ($e) use ($track) {
             return $e->sentEmail->id == $track->id &&
+                $e->ipAddress == '127.0.0.1' &&
                 $e->queue == 'alt-queue';
         });
         $this->assertDatabaseHas('sent_emails', [
@@ -247,6 +248,7 @@ class MailTrackerTest extends SetUpTest
         $response->assertSuccessful();
         Bus::assertDispatched(RecordTrackingJob::class, function ($e) use ($track) {
             return $e->sentEmail->id == $track->id &&
+                $e->ipAddress == '127.0.0.1' &&
                 $e->queue == 'alt-queue';
         });
         $this->assertDatabaseHas('sent_emails', [
@@ -276,6 +278,7 @@ class MailTrackerTest extends SetUpTest
         Bus::assertDispatched(RecordLinkClickJob::class, function ($job) use ($track, $redirect) {
             return $job->sentEmail->id == $track->id &&
                 $job->url == $redirect &&
+                $job->ipAddress == '127.0.0.1' &&
                 $job->queue == 'alt-queue';
         });
         $this->assertDatabaseHas('sent_emails', [
@@ -304,6 +307,7 @@ class MailTrackerTest extends SetUpTest
         Bus::assertDispatched(RecordLinkClickJob::class, function ($job) use ($track, $redirect) {
             return $job->sentEmail->id == $track->id &&
                 $job->url == $redirect &&
+                $job->ipAddress == '127.0.0.1' &&
                 $job->queue == 'alt-queue';
         });
         $this->assertDatabaseHas('sent_emails', [

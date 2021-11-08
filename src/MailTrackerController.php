@@ -9,7 +9,6 @@ use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use jdavidbakr\MailTracker\Events\LinkClickedEvent;
-use jdavidbakr\MailTracker\Events\ViewEmailEvent;
 use jdavidbakr\MailTracker\Exceptions\BadUrlLink;
 use jdavidbakr\MailTracker\RecordLinkClickJob;
 use jdavidbakr\MailTracker\RecordTrackingJob;
@@ -32,7 +31,7 @@ class MailTrackerController extends Controller
         $tracker = Model\SentEmail::where('hash', $hash)
             ->first();
         if ($tracker) {
-            RecordTrackingJob::dispatch($tracker)
+            RecordTrackingJob::dispatch($tracker, request()->ip())
                 ->onQueue(config('mail-tracker.tracker-queue'));
             if (!$tracker->opened_at) {
                 $tracker->opened_at = now();
@@ -67,7 +66,7 @@ class MailTrackerController extends Controller
         $tracker = Model\SentEmail::where('hash', $hash)
             ->first();
         if ($tracker) {
-            RecordLinkClickJob::dispatch($tracker, $url)
+            RecordLinkClickJob::dispatch($tracker, $url, request()->ip())
                 ->onQueue(config('mail-tracker.tracker-queue'));
             if (!$tracker->clicked_at) {
                 $tracker->clicked_at = now();
