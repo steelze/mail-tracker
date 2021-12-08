@@ -346,8 +346,14 @@ class MailTracker
         if (config('mail-tracker.expire-days') > 0) {
             $emails = MailTracker::sentEmailModel()->newQuery()->where('created_at', '<', \Carbon\Carbon::now()
                 ->subDays(config('mail-tracker.expire-days')))
-                ->select('id')
+                ->select('id', 'meta')
                 ->get();
+            // remove files
+            $emails->each(function ($email) {
+                if ($email->meta && ($filePath = $email->meta->get('content_file_path'))) {
+                    Storage::disk(config('mail-tracker.tracker-filesystem'))->delete($filePath);
+                }
+            });
             MailTracker::sentEmailUrlClickedModel()->newQuery()->whereIn('sent_email_id', $emails->pluck('id'))->delete();
             MailTracker::sentEmailModel()->newQuery()->whereIn('id', $emails->pluck('id'))->delete();
         }
