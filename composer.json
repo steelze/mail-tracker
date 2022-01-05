@@ -9,23 +9,25 @@
     "minimum-stability": "dev",
     "homepage": "https://github.com/jdavidbakr/MailTracker",
     "license": "MIT",
-    "authors": [{
-        "name": "J David Baker",
-        "email": "me@jdavidbaker.com",
-        "homepage": "http://www.jdavidbaker.com",
-        "role": "Developer"
-    }],
+    "authors": [
+        {
+            "name": "J David Baker",
+            "email": "me@jdavidbaker.com",
+            "homepage": "http://www.jdavidbaker.com",
+            "role": "Developer"
+        }
+    ],
     "require": {
-        "php": ">=7.2.0",
-        "illuminate/support": "~7.0|~8.0",
-        "guzzlehttp/guzzle": "^5.3.1|^6.2.1|^7.0",
+        "php": "^8.0",
+        "illuminate/support": "~9.0",
+        "guzzlehttp/guzzle": "^7.0.1",
         "aws/aws-php-sns-message-validator": "^1.1",
         "aws/aws-sdk-php": "^3.133"
     },
     "require-dev": {
-        "phpunit/phpunit": "~8.0",
-        "orchestra/testbench": "~5.0|~6.0",
-        "mockery/mockery": "^1.1"
+        "phpunit/phpunit": "^9.5.10",
+        "orchestra/testbench": "~6.0",
+        "mockery/mockery": "^1.4.4"
     },
     "suggest": {
         "fedeisas/laravel-mail-css-inliner": "Automatically inlines CSS into all outgoing mail."
