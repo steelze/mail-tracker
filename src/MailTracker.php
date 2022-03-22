@@ -2,13 +2,18 @@
 
 namespace jdavidbakr\MailTracker;
 
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Mail\SentMessage;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
-use jdavidbakr\MailTracker\Model\SentEmail;
 use jdavidbakr\MailTracker\Events\EmailSentEvent;
+use jdavidbakr\MailTracker\Model\SentEmail;
 use jdavidbakr\MailTracker\Model\SentEmailUrlClicked;
+use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\Part\TextPart;
 
-class MailTracker implements \Swift_Events_SendListener
+class MailTracker
 {
     // Set this to "false" to skip this library migrations
     public static $runsMigrations = true;
@@ -30,9 +35,9 @@ class MailTracker implements \Swift_Events_SendListener
     /**
      * Inject the tracking code into the message
      */
-    public function beforeSendPerformed(\Swift_Events_SendEvent $event)
+    public function messageSending(MessageSending $event)
     {
-        $message = $event->getMessage();
+        $message = $event->message;
 
         // Create the trackers
         $this->createTrackers($message);
@@ -41,25 +46,39 @@ class MailTracker implements \Swift_Events_SendListener
         $this->purgeOldRecords();
     }
 
-    public function sendPerformed(\Swift_Events_SendEvent $event)
+    public function messageSent(MessageSent $event)
     {
-        // If this was sent through SES, retrieve the data
         if ((config('mail.default') ?? config('mail.driver')) == 'ses') {
-            $message = $event->getMessage();
-            $this->updateSesMessageId($message);
+            $this->updateSesMessageId($event->sent);
+        } else {
+            $this->updateMessageId($event->sent);
         }
     }
 
-    protected function updateSesMessageId($message)
+    protected function updateMessageId(SentMessage $message)
     {
         // Get the SentEmail object
-        $headers = $message->getHeaders();
-        $hash = optional($headers->get('X-Mailer-Hash'))->getFieldBody();
+        $headers = $message->getOriginalMessage()->getHeaders();
+        $hash = optional($headers->get('X-Mailer-Hash'))->getBody();
         $sent_email = SentEmail::where('hash', $hash)->first();
 
         // Get info about the message-id from SES
         if ($sent_email) {
-            $sent_email->message_id = $headers->get('X-SES-Message-ID')->getFieldBody();
+            $sent_email->message_id = $message->getMessageId();
+            $sent_email->save();
+        }
+    }
+
+    protected function updateSesMessageId(SentMessage $message)
+    {
+        // Get the SentEmail object
+        $headers = $message->getOriginalMessage()->getHeaders();
+        $hash = optional($headers->get('X-Mailer-Hash'))->getBody();
+        $sent_email = SentEmail::where('hash', $hash)->first();
+
+        // Get info about the message-id from SES
+        if ($sent_email) {
+            $sent_email->message_id = $headers->get('X-SES-Message-ID')->getBody();
             $sent_email->save();
         }
     }
@@ -144,8 +163,12 @@ class MailTracker implements \Swift_Events_SendListener
      */
     protected function createTrackers($message)
     {
-        foreach ($message->getTo() as $to_email => $to_name) {
-            foreach ($message->getFrom() as $from_email => $from_name) {
+        foreach ($message->getTo() as $toAddress) {
+            $to_email = $toAddress->getAddress();
+            $to_name = $toAddress->getName();
+            foreach ($message->getFrom() as $fromAddress) {
+                $from_email = $fromAddress->getAddress();
+                $from_name = $fromAddress->getName();
                 $headers = $message->getHeaders();
                 if ($headers->get('X-No-Track')) {
                     // Don't send with this header
@@ -161,18 +184,21 @@ class MailTracker implements \Swift_Events_SendListener
                 $subject = $message->getSubject();
 
                 $original_content = $message->getBody();
+                $originalHtml = $original_content->getBody();
 
-                if ($message->getContentType() === 'text/html' ||
-                    ($message->getContentType() === 'multipart/alternative' && $message->getBody()) ||
-                    ($message->getContentType() === 'multipart/mixed' && $message->getBody())
+                $mime = $original_content->getMediaType().'/'.$original_content->getMediaSubtype();
+
+                if ($mime === 'text/html' ||
+                    ($mime === 'multipart/alternative' && $original_content->getBody()) ||
+                    ($mime === 'multipart/mixed' && $original_content->getBody())
                 ) {
-                    $message->setBody($this->addTrackers($message->getBody(), $hash));
-                }
-
-                foreach ($message->getChildren() as $part) {
-                    if (strpos($part->getContentType(), 'text/html') === 0) {
-                        $part->setBody($this->addTrackers($message->getBody(), $hash));
-                    }
+                    $message->setBody(new TextPart(
+                            $this->addTrackers($original_content->getBody(), $hash),
+                            null,
+                            $original_content->getMediaSubtype(),
+                            null
+                        )
+                    );
                 }
 
                 $tracker = SentEmail::create([
@@ -183,10 +209,14 @@ class MailTracker implements \Swift_Events_SendListener
                     'recipient_name' => $to_name,
                     'recipient_email' => $to_email,
                     'subject' => $subject,
-                    'content' => config('mail-tracker.log-content', true) ? (Str::length($original_content) > config('mail-tracker.content-max-size', 65535) ? Str::substr($original_content, 0, config('mail-tracker.content-max-size', 65535)) . '...' : $original_content) : null,
+                    'content' => config('mail-tracker.log-content', true) ?
+                        (Str::length($originalHtml) > config('mail-tracker.content-max-size', 65535) ?
+                            Str::substr($originalHtml, 0, config('mail-tracker.content-max-size', 65535)) . '...' :
+                            $originalHtml) 
+                        : null,
                     'opens' => 0,
                     'clicks' => 0,
-                    'message_id' => $message->getId(),
+                    'message_id' => Str::uuid(),
                     'meta' => [],
                 ]);
 
