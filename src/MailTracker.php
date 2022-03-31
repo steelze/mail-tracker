@@ -2,6 +2,7 @@
 
 namespace jdavidbakr\MailTracker;
 
+use Exception;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Mail\SentMessage;
@@ -11,6 +12,7 @@ use jdavidbakr\MailTracker\Events\EmailSentEvent;
 use jdavidbakr\MailTracker\Model\SentEmail;
 use jdavidbakr\MailTracker\Model\SentEmailUrlClicked;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\Part\Multipart\AlternativePart;
 use Symfony\Component\Mime\Part\TextPart;
 
 class MailTracker
@@ -184,7 +186,16 @@ class MailTracker
                 $subject = $message->getSubject();
 
                 $original_content = $message->getBody();
-                $original_html = $message->getHtmlbody();
+                if(get_class($original_content) == AlternativePart::class) {
+                    $messageBody = $message->getBody() ?: [];
+                    foreach($messageBody->getParts() as $part) {
+                        if($part->getMediaSubtype() == 'html') {
+                            $original_html = $part->getBody();
+                        }
+                    }
+                } else {
+                    $original_html = $original_content->getBody();
+                }
 
                 $mime = $original_content->getMediaType().'/'.$original_content->getMediaSubtype();
 
@@ -194,7 +205,7 @@ class MailTracker
                 ) {
                     $message->setBody(new TextPart(
                             $this->addTrackers($original_html, $hash),
-                            null,
+                            $message->getHtmlCharset(),
                             $original_content->getMediaSubtype(),
                             null
                         )

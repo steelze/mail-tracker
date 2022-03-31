@@ -10,6 +10,7 @@ use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Mail\Mailable;
 use Illuminate\Mail\MailServiceProvider;
 use Illuminate\Mail\SentMessage;
 use Illuminate\Support\Carbon;
@@ -53,6 +54,14 @@ class IgnoreExceptions extends Handler
     public function render($request, Throwable $e)
     {
         throw $e;
+    }
+}
+
+class TestMailable extends Mailable
+{
+    public function build()
+    {
+        return $this->markdown('email.markdown');
     }
 }
 
@@ -163,6 +172,32 @@ class MailTrackerTest extends SetUpTest
             'recipient_name' => $name,
             'recipient_email' => $email,
             'content' => $content
+        ]);
+    }
+
+    public function testSendMessageWithMultiPart()
+    {
+        $faker = Factory::create();
+        $email = $faker->email;
+        $name = $faker->firstName . ' ' .$faker->lastName;
+        View::addLocation(__DIR__);
+        $str = Mockery::mock(Str::class);
+        app()->instance(Str::class, $str);
+        $str->shouldReceive('random')
+            ->once()
+            ->andReturn('random-hash');
+        $mailable = new TestMailable();
+        $mailable->subject('this is the message subject.');
+
+        try {
+            Mail::to($email)->send($mailable);
+        } catch (Exception $e) {
+            // dd($e);
+        }
+
+        $this->assertDatabaseHas('sent_emails', [
+            'hash' => 'random-hash',
+            'recipient_email' => $email,
         ]);
     }
 
@@ -425,6 +460,7 @@ class MailTrackerTest extends SetUpTest
                 'setBody' => Mockery::Mock(Email::class),
                 'getChildren' => [],
                 'getId' => 'message-id',
+                'getHtmlCharset' => 'utf-8',
             ]);
         $sentEvent = Mockery::mock(MessageSent::class);
         $sentEvent->sent = Mockery::mock(SentMessage::class, [
@@ -482,6 +518,7 @@ class MailTrackerTest extends SetUpTest
                 'setBody' => null,
                 'getChildren' => [],
                 'getId' => 'message-id',
+                'getHtmlCharset' => 'utf-8',
             ]);
         $sentEvent = Mockery::mock(MessageSent::class);
         $sentEvent->sent = Mockery::mock(SentMessage::class, [
@@ -538,6 +575,7 @@ class MailTrackerTest extends SetUpTest
                 'setBody' => null,
                 'getChildren' => [],
                 'getId' => 'message-id',
+                'getHtmlCharset' => 'utf-8',
             ]);
         $sentEvent = Mockery::mock(MessageSent::class);
         $sentEvent->sent = Mockery::mock(SentMessage::class, [
