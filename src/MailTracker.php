@@ -186,30 +186,35 @@ class MailTracker
                 $subject = $message->getSubject();
 
                 $original_content = $message->getBody();
+                $original_html = '';
                 if(get_class($original_content) == AlternativePart::class) {
                     $messageBody = $message->getBody() ?: [];
+                    $newParts = [];
                     foreach($messageBody->getParts() as $part) {
                         if($part->getMediaSubtype() == 'html') {
                             $original_html = $part->getBody();
+                            $newParts[] = new TextPart(
+                                $this->addTrackers($original_html, $hash),
+                                $message->getHtmlCharset(),
+                                $part->getMediaSubtype(),
+                                null
+                            );
+                        } else {
+                            $newParts[] = $part;
                         }
                     }
+                    $message->setBody(new AlternativePart(...$newParts));
                 } else {
                     $original_html = $original_content->getBody();
-                }
-
-                $mime = $original_content->getMediaType().'/'.$original_content->getMediaSubtype();
-
-                if ($mime === 'text/html' ||
-                    ($mime === 'multipart/alternative' && $original_content) ||
-                    ($mime === 'multipart/mixed' && $original_content)
-                ) {
-                    $message->setBody(new TextPart(
-                            $this->addTrackers($original_html, $hash),
-                            $message->getHtmlCharset(),
-                            $original_content->getMediaSubtype(),
-                            null
-                        )
-                    );
+                    if($original_content->getMediaSubtype() == 'html') {
+                        $message->setBody(new TextPart(
+                                $this->addTrackers($original_html, $hash),
+                                $message->getHtmlCharset(),
+                                $original_content->getMediaSubtype(),
+                                null
+                            )
+                        );
+                    }
                 }
 
                 $tracker = SentEmail::create([
