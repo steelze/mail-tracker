@@ -201,6 +201,33 @@ class MailTrackerTest extends SetUpTest
         ]);
     }
 
+    public function testSendMessageWithMixedPart()
+    {
+        $faker = Factory::create();
+        $email = $faker->email;
+        $name = $faker->firstName . ' ' .$faker->lastName;
+        View::addLocation(__DIR__);
+        $str = Mockery::mock(Str::class);
+        app()->instance(Str::class, $str);
+        $str->shouldReceive('random')
+            ->once()
+            ->andReturn('random-hash');
+        $mailable = new TestMailable();
+        $mailable->subject('this is  the message subject.');
+        $mailable->attach(__DIR__.'/email/test.blade.php');
+
+        try {
+            Mail::to($email)->send($mailable);
+        } catch (Exception $e) {
+            // dd($e);
+        }
+
+        $this->assertDatabaseHas('sent_emails', [
+            'hash' => 'random-hash',
+            'recipient_email' => $email,
+        ]);
+    }
+
     /**
      * @test
      */

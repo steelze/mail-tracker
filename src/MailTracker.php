@@ -13,6 +13,7 @@ use jdavidbakr\MailTracker\Model\SentEmail;
 use jdavidbakr\MailTracker\Model\SentEmailUrlClicked;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Part\Multipart\AlternativePart;
+use Symfony\Component\Mime\Part\Multipart\MixedPart;
 use Symfony\Component\Mime\Part\TextPart;
 
 class MailTracker
@@ -187,7 +188,10 @@ class MailTracker
 
                 $original_content = $message->getBody();
                 $original_html = '';
-                if(get_class($original_content) == AlternativePart::class) {
+                if(
+                    ($original_content instanceof(AlternativePart::class)) ||
+                    ($original_content instanceof(MixedPart::class))
+                ) {
                     $messageBody = $message->getBody() ?: [];
                     $newParts = [];
                     foreach($messageBody->getParts() as $part) {
