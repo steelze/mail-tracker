@@ -7,7 +7,7 @@
 
 MailTracker will hook into all outgoing emails from Laravel and inject a tracking code into it. It will also store the rendered email in the database. There is also an interface to view sent emails.
 
-## NOTE: For Laravel < 5.3.23 you MUST use version 2.0 or earlier.
+## NOTE: If you are using Laravel 9.x you MUST be on version 9.6.0 or higher.
 
 ## Upgrade from 4.x to 5.x
 
