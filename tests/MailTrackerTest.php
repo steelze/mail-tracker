@@ -228,6 +228,44 @@ class MailTrackerTest extends SetUpTest
         ]);
     }
 
+    public function testSendMessageWithRelatedPart()
+    {
+        $faker = Factory::create();
+        $email = $faker->email;
+        $name = $faker->firstName . ' ' .$faker->lastName;
+        View::addLocation(__DIR__);
+        $str = Mockery::mock(Str::class);
+        app()->instance(Str::class, $str);
+        $str->shouldReceive('random')
+            ->once()
+            ->andReturn('random-hash');
+
+        try {
+            Mail::send('email.embed-test', [], function ($message) use ($email, $name) {
+                $message->from('from@johndoe.com', 'From Name');
+                $message->sender('sender@johndoe.com', 'Sender Name');
+
+                $message->to($email, $name);
+
+                $message->cc('cc@johndoe.com', 'CC Name');
+                $message->bcc('bcc@johndoe.com', 'BCC Name');
+
+                $message->replyTo('reply-to@johndoe.com', 'Reply-To Name');
+
+                $message->subject('This is the test subject');
+
+                $message->priority(3);
+            });
+        } catch (Exception $e) {
+            // dd($e);
+        }
+
+        $this->assertDatabaseHas('sent_emails', [
+            'hash' => 'random-hash',
+            'recipient_email' => $email,
+        ]);
+    }
+
     /**
      * @test
      */
@@ -497,7 +535,7 @@ class MailTrackerTest extends SetUpTest
             'getMessageId'=>'native-id',
         ]);
         $tracker = new MailTracker();
- 
+
         $tracker->messageSending($sendingEvent);
         $tracker->messageSent($sentEvent);
 
