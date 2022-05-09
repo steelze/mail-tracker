@@ -82,7 +82,9 @@ class AdminController extends Controller
      */
     public function getUrlDetail($id)
     {
-        $detalle = SentEmailUrlClicked::where('sent_email_id', $id)->get();
+        $detalle = SentEmailUrlClicked::where('sent_email_id', $id)
+            ->with('email')
+            ->get();
         if (!$detalle) {
             return back();
         }
