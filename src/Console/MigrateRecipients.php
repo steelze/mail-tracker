@@ -29,9 +29,9 @@ class MigrateRecipients extends Command
      */
     public function handle()
     {
-        $bar = optional($this->output)->createProgressBar(MailTracker::newSentEmailModel()->newQuery()->count());
+        $bar = optional($this->output)->createProgressBar(MailTracker::sentEmailModel()->newQuery()->count());
         optional($bar)->start();
-        DB::connection(MailTracker::newSentEmailModel()->getConnectionName())->table('sent_emails')->orderBy('id')->chunk(100, function ($emails) use ($bar) {
+        DB::connection(MailTracker::sentEmailModel()->getConnectionName())->table('sent_emails')->orderBy('id')->chunk(100, function ($emails) use ($bar) {
             $emails->each(function ($email) use ($bar) {
                 if ($email->recipient_email == null) {
                     $this->migrateEmail($email);
@@ -54,7 +54,7 @@ class MigrateRecipients extends Command
             $recipient_name = $matches[1];
             $recipient_email = $matches[2];
         }
-        MailTracker::newSentEmailModel()->newQuery()->where('id', $email->id)
+        MailTracker::sentEmailModel()->newQuery()->where('id', $email->id)
             ->update([
                 'sender_name' => trim($sender_name),
                 'sender_email' => trim($sender_email),

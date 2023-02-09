@@ -19,7 +19,7 @@ class RecordLinkClickJobTest extends SetUpTest
     public function it_records_clicks_to_links()
     {
         Event::fake();
-        $track = MailTracker::newSentEmailModel()->newQuery()->create([
+        $track = MailTracker::sentEmailModel()->newQuery()->create([
                 'hash' => Str::random(32),
             ]);
         $clicks = $track->clicks;

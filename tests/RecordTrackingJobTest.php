@@ -21,7 +21,7 @@ class RecordTrackingJobTest extends SetUpTest
     public function it_records_views()
     {
         Event::fake();
-        $track = MailTracker::newSentEmailModel()->newQuery()->create([
+        $track = MailTracker::sentEmailModel()->newQuery()->create([
                 'hash' => Str::random(32),
             ]);
         $job = new RecordTrackingJob($track, '127.0.0.1');

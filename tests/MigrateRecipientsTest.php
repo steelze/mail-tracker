@@ -14,12 +14,12 @@ class MigrateRecipientsTest extends SetUpTest
      */
     public function it_converts_existing_recipient_values()
     {
-        Schema::connection(MailTracker::newSentEmailModel()->getConnectionName())->table('sent_emails', function (Blueprint $table) {
+        Schema::connection(MailTracker::sentEmailModel()->getConnectionName())->table('sent_emails', function (Blueprint $table) {
             $table->string('sender')->nullable();
             $table->string('recipient')->nullable();
         });
-        MailTracker::newSentEmailModel()::unguard();
-        $tracker = MailTracker::newSentEmailModel()->newQuery()->create([
+        MailTracker::sentEmailModel()::unguard();
+        $tracker = MailTracker::sentEmailModel()->newQuery()->create([
             'hash' => 'email-hash',
             'sender' => 'Sender Dude <sender@example.com>',
             'recipient' => 'Recipient Dude <recipient@example.com>',
@@ -42,12 +42,12 @@ class MigrateRecipientsTest extends SetUpTest
      */
     public function it_converts_existing_recipient_values_with_no_name()
     {
-        Schema::connection(MailTracker::newSentEmailModel()->getConnectionName())->table('sent_emails', function (Blueprint $table) {
+        Schema::connection(MailTracker::sentEmailModel()->getConnectionName())->table('sent_emails', function (Blueprint $table) {
             $table->string('sender')->nullable();
             $table->string('recipient')->nullable();
         });
-        MailTracker::newSentEmailModel()::unguard();
-        $tracker = MailTracker::newSentEmailModel()->newQuery()->create([
+        MailTracker::sentEmailModel()::unguard();
+        $tracker = MailTracker::sentEmailModel()->newQuery()->create([
             'hash' => 'email-hash',
             'sender' => ' <sender@example.com>',
             'recipient' => ' <recipient@example.com>',

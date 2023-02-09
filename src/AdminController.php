@@ -35,7 +35,7 @@ class AdminController extends Controller
         session(['mail-tracker-index-page' => request()->page]);
         $search = session('mail-tracker-index-search');
 
-        $query = MailTracker::newSentEmailModel()->query();
+        $query = MailTracker::sentEmailModel()->query();
 
         if ($search) {
             $terms = explode(" ", $search);
@@ -63,7 +63,7 @@ class AdminController extends Controller
      */
     public function getShowEmail($id)
     {
-        $email = MailTracker::newSentEmailModel()->newQuery()->where('id', $id)->first();
+        $email = MailTracker::sentEmailModel()->newQuery()->where('id', $id)->first();
         return \View('emailTrakingViews::show')->with('email', $email);
     }
 
@@ -74,7 +74,7 @@ class AdminController extends Controller
      */
     public function getUrlDetail($id)
     {
-        $details = MailTracker::newSentEmailUrlClickedModel()->newQuery()->where('sent_email_id', $id)
+        $details = MailTracker::sentEmailUrlClickedModel()->newQuery()->where('sent_email_id', $id)
             ->with('email')
             ->get();
         if (!$details) {
@@ -90,7 +90,7 @@ class AdminController extends Controller
      */
     public function getSMTPDetail($id)
     {
-        $details = MailTracker::newSentEmailModel()->newQuery()->find($id);
+        $details = MailTracker::sentEmailModel()->newQuery()->find($id);
         if (!$details) {
             return back();
         }

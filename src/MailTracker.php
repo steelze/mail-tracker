@@ -70,7 +70,7 @@ class MailTracker
      * @param array $attributes
      * @return Model|SentEmail
      */
-    public static function newSentEmailModel(array $attributes = []): Model|SentEmail
+    public static function sentEmailModel(array $attributes = []): Model|SentEmail
     {
         return new static::$sentEmailModel($attributes);
     }
@@ -92,7 +92,7 @@ class MailTracker
      * @param array $attributes
      * @return Model|SentEmailUrlClicked
      */
-    public static function newSentEmailUrlClickedModel(array $attributes = []): Model|SentEmailUrlClicked
+    public static function sentEmailUrlClickedModel(array $attributes = []): Model|SentEmailUrlClicked
     {
         return new static::$sentEmailUrlClickedModel($attributes);
     }
@@ -116,7 +116,7 @@ class MailTracker
         $sentMessage = $event->sent;
         $headers = $sentMessage->getOriginalMessage()->getHeaders();
         $hash = optional($headers->get('X-Mailer-Hash'))->getBody();
-        $sentEmail = MailTracker::newSentEmailModel()->newQuery()->where('hash', $hash)->first();
+        $sentEmail = MailTracker::sentEmailModel()->newQuery()->where('hash', $hash)->first();
 
         if ($sentEmail) {
             $sentEmail->message_id = $this->callMessageIdResolverUsing($sentMessage);
@@ -256,7 +256,7 @@ class MailTracker
                 }
                 do {
                     $hash = app(Str::class)->random(32);
-                    $used = MailTracker::newSentEmailModel()->newQuery()->where('hash', $hash)->count();
+                    $used = MailTracker::sentEmailModel()->newQuery()->where('hash', $hash)->count();
                 } while ($used > 0);
                 $headers->addTextHeader('X-Mailer-Hash', $hash);
                 $subject = $message->getSubject();
@@ -314,7 +314,7 @@ class MailTracker
                 }
 
                 /** @var SentEmail $tracker */
-                $tracker = tap(MailTracker::newSentEmailModel([
+                $tracker = tap(MailTracker::sentEmailModel([
                     'hash' => $hash,
                     'headers' => $headers->toString(),
                     'sender_name' => $from_name,
@@ -344,12 +344,12 @@ class MailTracker
     protected function purgeOldRecords()
     {
         if (config('mail-tracker.expire-days') > 0) {
-            $emails = MailTracker::newSentEmailModel()->newQuery()->where('created_at', '<', \Carbon\Carbon::now()
+            $emails = MailTracker::sentEmailModel()->newQuery()->where('created_at', '<', \Carbon\Carbon::now()
                 ->subDays(config('mail-tracker.expire-days')))
                 ->select('id')
                 ->get();
-            MailTracker::newSentEmailUrlClickedModel()->newQuery()->whereIn('sent_email_id', $emails->pluck('id'))->delete();
-            MailTracker::newSentEmailModel()->newQuery()->whereIn('id', $emails->pluck('id'))->delete();
+            MailTracker::sentEmailUrlClickedModel()->newQuery()->whereIn('sent_email_id', $emails->pluck('id'))->delete();
+            MailTracker::sentEmailModel()->newQuery()->whereIn('id', $emails->pluck('id'))->delete();
         }
     }
 }

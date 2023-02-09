@@ -14,7 +14,7 @@ class AddSenderEmailAndNameToSentEmailsTable extends Migration
      */
     public function up()
     {
-        Schema::connection(MailTracker::newSentEmailModel()->getConnectionName())->table('sent_emails', function (Blueprint $table) {
+        Schema::connection(MailTracker::sentEmailModel()->getConnectionName())->table('sent_emails', function (Blueprint $table) {
             $table->string('recipient_email')->nullable()->after('headers');
             $table->string('recipient_name')->nullable()->after('headers');
             $table->string('sender_email')->nullable()->after('headers');
@@ -29,7 +29,7 @@ class AddSenderEmailAndNameToSentEmailsTable extends Migration
      */
     public function down()
     {
-        Schema::connection(MailTracker::newSentEmailModel()->getConnectionName())->table('sent_emails', function (Blueprint $table) {
+        Schema::connection(MailTracker::sentEmailModel()->getConnectionName())->table('sent_emails', function (Blueprint $table) {
             $table->dropColumn('sender_name');
             $table->dropColumn('sender_email');
             $table->dropColumn('recipient_name');

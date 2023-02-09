@@ -31,7 +31,7 @@ class RecordComplaintJob implements ShouldQueue
 
     public function handle()
     {
-        $sent_email = MailTracker::newSentEmailModel()->newQuery()->where('message_id', $this->message->mail->messageId)->first();
+        $sent_email = MailTracker::sentEmailModel()->newQuery()->where('message_id', $this->message->mail->messageId)->first();
         if ($sent_email) {
             $meta = collect($sent_email->meta);
             $meta->put('complaint', true);

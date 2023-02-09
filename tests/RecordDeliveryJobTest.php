@@ -19,7 +19,7 @@ class RecordDeliveryJobTest extends SetUpTest
     public function it_marks_the_email_as_unsuccessful()
     {
         Event::fake();
-        $track = MailTracker::newSentEmailModel()->newQuery()->create([
+        $track = MailTracker::sentEmailModel()->newQuery()->create([
                 'hash' => Str::random(32),
             ]);
         $message_id = Str::uuid();

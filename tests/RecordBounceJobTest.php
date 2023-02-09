@@ -17,7 +17,7 @@ class RecordBounceJobTest extends SetUpTest
     public function it_handles_permanent_bounce()
     {
         Event::fake();
-        $track = MailTracker::newSentEmailModel()->newQuery()->create([
+        $track = MailTracker::sentEmailModel()->newQuery()->create([
                 'hash' => Str::random(32),
             ]);
         $message_id = Str::uuid();
@@ -61,7 +61,7 @@ class RecordBounceJobTest extends SetUpTest
     public function it_handles_transient_bounce()
     {
         Event::fake();
-        $track = MailTracker::newSentEmailModel()->newQuery()->create([
+        $track = MailTracker::sentEmailModel()->newQuery()->create([
                 'hash' => Str::random(32),
             ]);
         $message_id = Str::uuid();
@@ -110,7 +110,7 @@ class RecordBounceJobTest extends SetUpTest
     public function it_handles_transient_bounce_without_diagnostic_code()
     {
         Event::fake();
-        $track = MailTracker::newSentEmailModel()->newQuery()->create([
+        $track = MailTracker::sentEmailModel()->newQuery()->create([
                 'hash' => Str::random(32),
             ]);
         $message_id = Str::uuid();
