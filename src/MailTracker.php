@@ -35,14 +35,14 @@ class MailTracker
      *
      * @var string
      */
-    protected static string $sentEmailModel = SentEmail::class;
+    public static string $sentEmailModel = SentEmail::class;
 
     /**
      * The SentEmailUrlClicked model class name.
      *
      * @var string
      */
-    protected static string $sentEmailUrlClickedModel = SentEmailUrlClicked::class;
+    public static string $sentEmailUrlClickedModel = SentEmailUrlClicked::class;
 
     /**
      * Configure this library to not register its migrations.

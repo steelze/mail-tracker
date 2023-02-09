@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use jdavidbakr\MailTracker\MailTracker;
 
 /**
  * @property string $hash
@@ -169,7 +170,7 @@ class SentEmail extends Model
 
     public function urlClicks()
     {
-        return $this->hasMany(SentEmailUrlClicked::class);
+        return $this->hasMany(MailTracker::$sentEmailUrlClickedModel);
     }
 
     public function fillContent(string $originalHtml, string $hash)
