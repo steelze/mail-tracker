@@ -4,7 +4,7 @@ namespace jdavidbakr\MailTracker\Tests;
 
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Event;
-use jdavidbakr\MailTracker\Model\SentEmail;
+use jdavidbakr\MailTracker\MailTracker;
 use jdavidbakr\MailTracker\RecordBounceJob;
 use jdavidbakr\MailTracker\RecordDeliveryJob;
 use jdavidbakr\MailTracker\RecordComplaintJob;
@@ -19,7 +19,7 @@ class RecordLinkClickJobTest extends SetUpTest
     public function it_records_clicks_to_links()
     {
         Event::fake();
-        $track = \jdavidbakr\MailTracker\Model\SentEmail::create([
+        $track = MailTracker::newSentEmailModel()->newQuery()->create([
                 'hash' => Str::random(32),
             ]);
         $clicks = $track->clicks;

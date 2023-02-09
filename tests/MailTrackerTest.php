@@ -73,10 +73,10 @@ class MailTrackerTest extends SetUpTest
         Config::set('mail-tracker.inject-pixel', 1);
         Config::set('mail-tracker.track-links', 1);
 
-        $old_email = SentEmail::create([
+        $old_email = MailTracker::newSentEmailModel()->create([
                 'hash' => Str::random(32),
             ]);
-        $old_url = SentEmailUrlClicked::create([
+        $old_url = MailTracker::newSentEmailUrlClickedModel()->newQuery()->create([
                 'sent_email_id' => $old_email->id,
                 'hash' => Str::random(32),
             ]);
@@ -128,7 +128,7 @@ class MailTrackerTest extends SetUpTest
                 'opened_at' => null,
                 'clicked_at' => null,
             ]);
-        $sent_email = SentEmail::where([
+        $sent_email = MailTracker::newSentEmailModel()->where([
             'hash' => 'random-hash',
         ])->first();
         $this->assertEquals($name.' <'.$email.'>', $sent_email->recipient);
@@ -339,7 +339,7 @@ class MailTrackerTest extends SetUpTest
         Carbon::setTestNow(now());
         Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
-        $track = SentEmail::create([
+        $track = MailTracker::newSentEmailModel()->create([
                 'hash' => Str::random(32),
             ]);
         $pings = $track->opens;
@@ -368,7 +368,7 @@ class MailTrackerTest extends SetUpTest
         Carbon::setTestNow(now());
         Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
-        $track = SentEmail::create([
+        $track = MailTracker::newSentEmailModel()->create([
                 'hash' => Str::random(32),
                 'opened_at' => now()->subDays(10),
             ]);
@@ -395,7 +395,7 @@ class MailTrackerTest extends SetUpTest
         Carbon::setTestNow(now());
         Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
-        $track = SentEmail::create([
+        $track = MailTracker::newSentEmailModel()->create([
                 'hash' => Str::random(32),
             ]);
         $clicks = $track->clicks;
@@ -426,7 +426,7 @@ class MailTrackerTest extends SetUpTest
         Config::set('mail-tracker.inject-pixel', true);
         Config::set('mail-tracker.tracker-queue', 'alt-queue');
         Bus::fake();
-        $track = SentEmail::create([
+        $track = MailTracker::newSentEmailModel()->create([
                 'hash' => Str::random(32),
             ]);
         $redirect = 'http://'.Str::random(15).'.com/'.Str::random(10).'/'.Str::random(10).'/'.rand(0, 100).'/'.rand(0, 100).'?page='.rand(0, 100).'&x='.Str::random(32);
@@ -456,7 +456,7 @@ class MailTrackerTest extends SetUpTest
      */
     public function it_redirects_even_if_no_sent_email_exists()
     {
-        $track = SentEmail::create([
+        $track = MailTracker::newSentEmailModel()->create([
                 'hash' => Str::random(32),
             ]);
 
@@ -519,7 +519,7 @@ class MailTrackerTest extends SetUpTest
      */
     public function it_retrieves_the_mesage_id_from_laravel_mailer()
     {
-        $sent = SentEmail::create([
+        $sent = MailTracker::newSentEmailModel()->create([
             'hash'=>'the-hash',
             'message_id'=>'to-be-replaced',
         ]);
@@ -576,7 +576,7 @@ class MailTrackerTest extends SetUpTest
     {
         Config::set('mail.default', 'ses');
         Config::set('mail.driver', null);
-        $sent = SentEmail::create([
+        $sent = MailTracker::newSentEmailModel()->create([
             'hash'=>'the-hash',
             'message_id'=>'to-be-replaced',
         ]);
@@ -638,7 +638,7 @@ class MailTrackerTest extends SetUpTest
             ->andReturn('random-hash');
         Config::set('mail.driver', 'ses');
         Config::set('mail.default', null);
-        $sent = SentEmail::create([
+        $sent = MailTracker::newSentEmailModel()->create([
             'hash'=>'the-hash',
             'message_id'=>'to-be-replaced',
         ]);
@@ -922,7 +922,7 @@ class MailTrackerTest extends SetUpTest
             'clicks' => 1,
         ]);
 
-        $track = SentEmail::whereHash($hash)->first();
+        $track = MailTracker::newSentEmailModel()->whereHash($hash)->first();
         $this->assertNotNull($track);
         $this->assertEquals(1, $track->clicks);
     }
@@ -980,7 +980,7 @@ class MailTrackerTest extends SetUpTest
             'clicks' => 1,
         ]);
 
-        $track = SentEmail::whereHash($hash)->first();
+        $track = MailTracker::newSentEmailModel()->whereHash($hash)->first();
         $this->assertNotNull($track);
         $this->assertEquals(1, $track->clicks);
     }
@@ -1018,7 +1018,7 @@ class MailTrackerTest extends SetUpTest
         } catch (TransportException $e) {
         }
 
-        $track = SentEmail::orderBy('id', 'desc')->first();
+        $track = MailTracker::newSentEmailModel()->orderBy('id', 'desc')->first();
         $this->assertEquals($header_test, $track->getHeader('X-Header-Test'));
     }
 
@@ -1054,7 +1054,7 @@ class MailTrackerTest extends SetUpTest
         } catch (TransportException $e) {
         }
 
-        $track = SentEmail::orderBy('id', 'desc')->first();
+        $track = MailTracker::newSentEmailModel()->orderBy('id', 'desc')->first();
         $this->assertEquals($header_test, $track->getHeader('X-Header-Test'));
     }
 
@@ -1095,7 +1095,7 @@ class MailTrackerTest extends SetUpTest
         } catch (TransportException $e) {
         }
 
-        $track = SentEmail::orderBy('id', 'desc')->first();
+        $track = MailTracker::newSentEmailModel()->orderBy('id', 'desc')->first();
 
         $this->assertEquals(
             'CC This Person With a Long Name 1 <cc.averylongemail1@johndoe.com>, ' .
@@ -1123,10 +1123,10 @@ class MailTrackerTest extends SetUpTest
         $this->app['migrator']->setConnection('secondary');
         $this->artisan('migrate', ['--database' => 'secondary']);
 
-        $old_email = SentEmail::create([
+        $old_email = MailTracker::newSentEmailModel()->create([
             'hash' => Str::random(32),
         ]);
-        $old_url = SentEmailUrlClicked::create([
+        $old_url = MailTracker::newSentEmailUrlClickedModel()->newQuery()->create([
             'sent_email_id' => $old_email->id,
             'hash' => Str::random(32),
         ]);
@@ -1180,14 +1180,14 @@ class MailTrackerTest extends SetUpTest
     public function it_can_retrieve_url_clicks_from_eloquent()
     {
         Event::fake();
-        $track = SentEmail::create([
+        $track = MailTracker::newSentEmailModel()->create([
             'hash' => Str::random(32),
         ]);
         $message_id = Str::random(32);
         $track->message_id = $message_id;
         $track->save();
 
-        $urlClick = SentEmailUrlClicked::create([
+        $urlClick = MailTracker::newSentEmailUrlClickedModel()->newQuery()->create([
             'sent_email_id' => $track->id,
             'url' => 'https://example.com',
             'hash' => Str::random(32)
@@ -1195,7 +1195,7 @@ class MailTrackerTest extends SetUpTest
         $urlClick->save();
         $this->assertTrue($track->urlClicks->count() === 1);
         $this->assertInstanceOf(\Illuminate\Support\Collection::class, $track->urlClicks);
-        $this->assertInstanceOf(SentEmailUrlClicked::class, $track->urlClicks->first());
+        $this->assertInstanceOf(MailTracker::$sentEmailUrlClickedModel, $track->urlClicks->first());
     }
 
     /**
@@ -1204,7 +1204,7 @@ class MailTrackerTest extends SetUpTest
     public function it_handles_headers_with_colons()
     {
         $headerData = '{"some_id":2,"some_othger_id":"0dd75231-31bb-4e67-8ab7-a83315f75a44","some_field":"A Field Value"}';
-        $track = SentEmail::create([
+        $track = MailTracker::newSentEmailModel()->create([
             'hash' => Str::random(32),
             'headers' => 'X-MyHeader: '.$headerData,
         ]);
@@ -1255,7 +1255,7 @@ class MailTrackerTest extends SetUpTest
             'content' => null
         ]);
 
-        $tracker = SentEmail::query()->where('hash', '=','random-hash')->first();
+        $tracker = MailTracker::newSentEmailModel()->newQuery()->where('hash', '=','random-hash')->first();
         $this->assertNotNull($tracker);
         $this->assertEquals($content, $tracker->content);
         $folder = config('mail-tracker.tracker-filesystem-folder', 'mail-tracker');
