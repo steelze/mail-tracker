@@ -6,8 +6,6 @@ use Aws\Sns\MessageValidator as SNSMessageValidator;
 use Exception;
 use Faker\Factory;
 use Illuminate\Contracts\Debug\ExceptionHandler;
-use Illuminate\Foundation\Support\Providers\RouteServiceProvider;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Mail\Mailable;
@@ -20,11 +18,8 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
-use jdavidbakr\MailTracker\Events\ComplaintMessageEvent;
-use jdavidbakr\MailTracker\Events\EmailDeliveredEvent;
 use jdavidbakr\MailTracker\Events\EmailSentEvent;
 use jdavidbakr\MailTracker\Events\LinkClickedEvent;
-use jdavidbakr\MailTracker\Events\ViewEmailEvent;
 use jdavidbakr\MailTracker\Exceptions\BadUrlLink;
 use jdavidbakr\MailTracker\MailTracker;
 use jdavidbakr\MailTracker\Model\SentEmail;
@@ -36,7 +31,6 @@ use jdavidbakr\MailTracker\RecordLinkClickJob;
 use jdavidbakr\MailTracker\RecordTrackingJob;
 use Mockery;
 use Orchestra\Testbench\Exceptions\Handler;
-use Orchestra\Testbench\TestCase;
 use Symfony\Component\Mailer\Exception\TransportException;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Header\Headers;
@@ -590,7 +584,7 @@ class MailTrackerTest extends SetUpTest
         $headers->addHeader('X-Mailer-Hash', $sent->hash);
         $headers->addHeader('X-SES-Message-ID', 'aws-mailer-hash');
         $sendingEvent = Mockery::mock(MessageSending::class);
-        $sendingEvent->message = Mockery::mock([
+        $sendingEvent->message = Mockery::mock(Email::class, [
                 'getTo' => [
                     Mockery::mock([
                         'getAddress'=>'destination@example.com',
@@ -605,12 +599,12 @@ class MailTrackerTest extends SetUpTest
                 ],
                 'getHeaders' => $headers,
                 'getSubject' => 'The message subject',
-                'getBody' => Mockery::mock('content', [
+                'getBody' => Mockery::mock(AbstractPart::class, 'content', [
                     'getBody'=>'The body',
                     'getMediaType'=>'text',
                     'getMediaSubtype'=>'html',
                 ]),
-                'setBody' => null,
+                'setBody' => Mockery::mock(Email::class),
                 'getChildren' => [],
                 'getId' => 'message-id',
                 'getHtmlCharset' => 'utf-8',
@@ -647,7 +641,7 @@ class MailTrackerTest extends SetUpTest
         $headers->addHeader('X-Mailer-Hash', $sent->hash);
         $headers->addHeader('X-SES-Message-ID', 'aws-mailer-hash');
         $sendingEvent = Mockery::mock(MessageSending::class);
-        $sendingEvent->message = Mockery::mock([
+        $sendingEvent->message = Mockery::mock(Email::class, [
                 'getTo' => [
                     Mockery::mock([
                         'getAddress'=>'destination@example.com',
@@ -662,12 +656,12 @@ class MailTrackerTest extends SetUpTest
                 ],
                 'getHeaders' => $headers,
                 'getSubject' => 'The message subject',
-                'getBody' => Mockery::mock('content', [
+                'getBody' => Mockery::mock(AbstractPart::class, 'content', [
                     'getBody'=>'The body',
                     'getMediaType'=>'text',
                     'getMediaSubtype'=>'html',
                 ]),
-                'setBody' => null,
+                'setBody' => Mockery::mock(Email::class),
                 'getChildren' => [],
                 'getId' => 'message-id',
                 'getHtmlCharset' => 'utf-8',
