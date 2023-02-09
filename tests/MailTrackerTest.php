@@ -5,6 +5,7 @@ namespace jdavidbakr\MailTracker\Tests;
 use Exception;
 use Faker\Factory;
 use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Mail\Mailable;
@@ -1264,4 +1265,52 @@ class MailTrackerTest extends SetUpTest
         $this->assertEquals($expectedPath, $filePath);
         Storage::disk(config('mail-tracker.tracker-filesystem'))->assertExists($filePath);
     }
+
+    /** @test */
+    public function sent_email_model_can_be_created()
+    {
+        $sentEmail = MailTracker::sentEmailModel();
+
+        $this->assertInstanceOf(SentEmail::class, $sentEmail);
+    }
+
+    /** @test */
+    public function sent_email_model_can_be_changed()
+    {
+        MailTracker::useSentEmailModel(SentEmailStub::class);
+
+        $sentEmail = MailTracker::sentEmailModel();
+
+        $this->assertInstanceOf(SentEmailStub::class, $sentEmail);
+
+        MailTracker::useSentEmailModel(SentEmail::class);
+    }
+
+    /** @test */
+    public function sent_email_url_clicked_model_can_be_created()
+    {
+        $sentEmailUrlClicked = MailTracker::sentEmailUrlClickedModel();
+
+        $this->assertInstanceOf(SentEmailUrlClicked::class, $sentEmailUrlClicked);
+    }
+
+    /** @test */
+    public function sent_email_url_clicked_model_can_be_changed()
+    {
+        MailTracker::useSentEmailUrlClickedModel(SentEmailUrlClickedStub::class);
+
+        $sentEmailUrlClicked = MailTracker::sentEmailUrlClickedModel();
+
+        $this->assertInstanceOf(SentEmailUrlClickedStub::class, $sentEmailUrlClicked);
+
+        MailTracker::useSentEmailUrlClickedModel(SentEmailUrlClicked::class);
+    }
+}
+
+class SentEmailStub extends Model
+{
+}
+
+class SentEmailUrlClickedStub extends Model
+{
 }
