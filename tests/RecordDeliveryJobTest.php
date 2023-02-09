@@ -4,6 +4,7 @@ namespace jdavidbakr\MailTracker\Tests;
 
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Event;
+use jdavidbakr\MailTracker\MailTracker;
 use jdavidbakr\MailTracker\RecordBounceJob;
 use jdavidbakr\MailTracker\RecordDeliveryJob;
 use jdavidbakr\MailTracker\RecordComplaintJob;
@@ -18,7 +19,7 @@ class RecordDeliveryJobTest extends SetUpTest
     public function it_marks_the_email_as_unsuccessful()
     {
         Event::fake();
-        $track = MailTracker::newSentEmailModel()->create([
+        $track = MailTracker::newSentEmailModel()->newQuery()->create([
                 'hash' => Str::random(32),
             ]);
         $message_id = Str::uuid();

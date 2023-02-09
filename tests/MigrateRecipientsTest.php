@@ -19,7 +19,7 @@ class MigrateRecipientsTest extends SetUpTest
             $table->string('recipient')->nullable();
         });
         MailTracker::newSentEmailModel()::unguard();
-        $tracker = MailTracker::newSentEmailModel()->create([
+        $tracker = MailTracker::newSentEmailModel()->newQuery()->create([
             'hash' => 'email-hash',
             'sender' => 'Sender Dude <sender@example.com>',
             'recipient' => 'Recipient Dude <recipient@example.com>',
@@ -47,7 +47,7 @@ class MigrateRecipientsTest extends SetUpTest
             $table->string('recipient')->nullable();
         });
         MailTracker::newSentEmailModel()::unguard();
-        $tracker = MailTracker::newSentEmailModel()->create([
+        $tracker = MailTracker::newSentEmailModel()->newQuery()->create([
             'hash' => 'email-hash',
             'sender' => ' <sender@example.com>',
             'recipient' => ' <recipient@example.com>',
