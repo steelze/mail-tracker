@@ -114,6 +114,15 @@ If a lot of emails are sent, this can consume a lot of memory and slow down the 
 To use the filesystem you need to change the `log-content-strategy` from `database` to `filesystem`. 
 You can specify the disk with `tracker-filesystem` and the folder it should store the file in with `tracker-filesystem-folder`.
 
+### Overriding models
+
+In some cases you want to override the built-in models. You can do so easily for example in you `AppServiceProvider` with
+
+```php
+\jdavidbakr\MailTracker\MailTracker::useSentEmailModel(YourOwnSentEmailModel::class);
+\jdavidbakr\MailTracker\MailTracker::useSentEmailUrlClickedModel(YourOwnSentEmailUrlClickedModel::class);
+```
+
 ## Note on dev testing
 
 Several people have reported the tracking pixel not working while they were testing. What is happening with the tracking pixel is that the email client is connecting to your website to log the view. In order for this to happen, images have to be visible in the client, and the client has to be able to connect to your server.
