@@ -8,8 +8,6 @@ use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Mail\SentMessage;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use jdavidbakr\MailTracker\Events\EmailSentEvent;
 use jdavidbakr\MailTracker\Model\SentEmail;
@@ -118,7 +116,7 @@ class MailTracker
         $sentMessage = $event->sent;
         $headers = $sentMessage->getOriginalMessage()->getHeaders();
         $hash = optional($headers->get('X-Mailer-Hash'))->getBody();
-        $sentEmail = SentEmail::where('hash', $hash)->first();
+        $sentEmail = MailTracker::newSentEmailModel()->newQuery()->where('hash', $hash)->first();
 
         if ($sentEmail) {
             $sentEmail->message_id = $this->callMessageIdResolverUsing($sentMessage);
@@ -258,7 +256,7 @@ class MailTracker
                 }
                 do {
                     $hash = app(Str::class)->random(32);
-                    $used = SentEmail::where('hash', $hash)->count();
+                    $used = MailTracker::newSentEmailModel()->newQuery()->where('hash', $hash)->count();
                 } while ($used > 0);
                 $headers->addTextHeader('X-Mailer-Hash', $hash);
                 $subject = $message->getSubject();
@@ -316,7 +314,7 @@ class MailTracker
                 }
 
                 /** @var SentEmail $tracker */
-                $tracker = tap(new SentEmail([
+                $tracker = tap(MailTracker::newSentEmailModel([
                     'hash' => $hash,
                     'headers' => $headers->toString(),
                     'sender_name' => $from_name,
@@ -346,12 +344,12 @@ class MailTracker
     protected function purgeOldRecords()
     {
         if (config('mail-tracker.expire-days') > 0) {
-            $emails = SentEmail::where('created_at', '<', \Carbon\Carbon::now()
+            $emails = MailTracker::newSentEmailModel()->newQuery()->where('created_at', '<', \Carbon\Carbon::now()
                 ->subDays(config('mail-tracker.expire-days')))
                 ->select('id')
                 ->get();
-            SentEmailUrlClicked::whereIn('sent_email_id', $emails->pluck('id'))->delete();
-            SentEmail::whereIn('id', $emails->pluck('id'))->delete();
+            MailTracker::newSentEmailUrlClickedModel()->newQuery()->whereIn('sent_email_id', $emails->pluck('id'))->delete();
+            MailTracker::newSentEmailModel()->newQuery()->whereIn('id', $emails->pluck('id'))->delete();
         }
     }
 }
