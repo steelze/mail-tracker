@@ -3,6 +3,7 @@
 namespace jdavidbakr\MailTracker;
 
 use Closure;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Mail\SentMessage;
@@ -30,6 +31,20 @@ class MailTracker
     protected Closure $messageIdResolver;
 
     /**
+     * The SentEmail model class name.
+     *
+     * @var string
+     */
+    protected static string $sentEmailModel = SentEmail::class;
+
+    /**
+     * The SentEmailUrlClicked model class name.
+     *
+     * @var string
+     */
+    protected static string $sentEmailUrlClickedModel = SentEmailUrlClicked::class;
+
+    /**
      * Configure this library to not register its migrations.
      *
      * @return static
@@ -39,6 +54,49 @@ class MailTracker
         static::$runsMigrations = false;
 
         return new static;
+    }
+
+    /**
+     * Set class name of SentEmail model.
+     *
+     * @param string $sentEmailModelClass
+     * @return void
+     */
+    public static function useSentEmailModel(string $sentEmailModelClass): void {
+        static::$sentEmailModel = $sentEmailModelClass;
+    }
+
+    /**
+     * Create new SentEmail model.
+     *
+     * @param array $attributes
+     * @return Model|SentEmail
+     */
+    public static function newSentEmailModel(array $attributes = []): Model|SentEmail
+    {
+        return new static::$sentEmailModel($attributes);
+    }
+
+    /**
+     * Set class name of SentEmailUrlClicked model.
+     *
+     * @param string $class
+     * @return void
+     */
+    public static function useSentEmailUrlClickedModel(string $class): void
+    {
+        static::$sentEmailUrlClickedModel = $class;
+    }
+
+    /**
+     * Create new SentEmailUrlClicked model.
+     *
+     * @param array $attributes
+     * @return Model|SentEmailUrlClicked
+     */
+    public static function newSentEmailUrlClickedModel(array $attributes = []): Model|SentEmailUrlClicked
+    {
+        return new static::$sentEmailUrlClickedModel($attributes);
     }
 
     /**
