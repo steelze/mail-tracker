@@ -2,9 +2,10 @@
 
 namespace jdavidbakr\MailTracker\Events;
 
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use jdavidbakr\MailTracker\Model\SentEmail;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Queue\SerializesModels;
+use jdavidbakr\MailTracker\Contracts\SentEmailModel;
 
 class PermanentBouncedMessageEvent implements ShouldQueue
 {
@@ -17,9 +18,9 @@ class PermanentBouncedMessageEvent implements ShouldQueue
      * Create a new event instance.
      *
      * @param string $email_address
-     * @param SentEmail|null $sent_email
+     * @param Model|SentEmailModel|null $sent_email
      */
-    public function __construct(string $email_address, SentEmail $sent_email = null)
+    public function __construct(string $email_address, Model|SentEmailModel|null $sent_email = null)
     {
         $this->email_address = $email_address;
         $this->sent_email = $sent_email;

@@ -9,6 +9,7 @@ use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Mail\SentMessage;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
+use jdavidbakr\MailTracker\Contracts\SentEmailModel;
 use jdavidbakr\MailTracker\Events\EmailSentEvent;
 use jdavidbakr\MailTracker\Model\SentEmail;
 use jdavidbakr\MailTracker\Model\SentEmailUrlClicked;
@@ -325,7 +326,7 @@ class MailTracker
                     'opens' => 0,
                     'clicks' => 0,
                     'message_id' => Str::uuid(),
-                ]), function(SentEmail $sentEmail) use ($original_html, $hash) {
+                ]), function(Model|SentEmailModel $sentEmail) use ($original_html, $hash) {
                     $sentEmail->fillContent($original_html, $hash);
 
                     $sentEmail->save();

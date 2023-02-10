@@ -3,12 +3,14 @@
 namespace jdavidbakr\MailTracker\Model;
 
 use Illuminate\Database\Eloquent\Model;
-use jdavidbakr\MailTracker\MailTracker;
+use jdavidbakr\MailTracker\Concerns\IsSentEmailUrlClickedModel;
+use jdavidbakr\MailTracker\Contracts\SentEmailUrlClickedModel;
 
-// use Model\SentEmail;
 
-class SentEmailUrlClicked extends Model
+class SentEmailUrlClicked extends Model implements SentEmailUrlClickedModel
 {
+    use IsSentEmailUrlClickedModel;
+
     protected $table = 'sent_emails_url_clicked';
 
     protected $fillable = [
@@ -17,15 +19,4 @@ class SentEmailUrlClicked extends Model
         'hash',
         'clicks',
     ];
-
-    public function getConnectionName()
-    {
-        $connName = config('mail-tracker.connection');
-        return $connName ?: config('database.default');
-    }
-
-    public function email()
-    {
-        return $this->belongsTo(MailTracker::$sentEmailModel, 'sent_email_id');
-    }
 }

@@ -119,8 +119,28 @@ You can specify the disk with `tracker-filesystem` and the folder it should stor
 In some cases you want to override the built-in models. You can do so easily for example in you `AppServiceProvider` with
 
 ```php
-\jdavidbakr\MailTracker\MailTracker::useSentEmailModel(YourOwnSentEmailModel::class);
-\jdavidbakr\MailTracker\MailTracker::useSentEmailUrlClickedModel(YourOwnSentEmailUrlClickedModel::class);
+MailTracker::useSentEmailModel(YourOwnSentEmailModel::class);
+MailTracker::useSentEmailUrlClickedModel(YourOwnSentEmailUrlClickedModel::class);
+```
+
+Your model should implement to `SentEmailModel` or `SentEmailUrlClickedModel` interface. This package provides traits to easily implement your own models but not have to reimplement or copy existing code.
+
+```php
+use Illuminate\Database\Eloquent\Model;
+use jdavidbakr\MailTracker\Concerns\IsSentEmailModel;
+use jdavidbakr\MailTracker\Contracts\SentEmailModel;
+
+class OwnEmailSentModel extends Model implements SentEmailModel {
+    use IsSentEmailModel;
+
+    protected static $unguarded = true;
+
+    protected $casts = [
+        'meta' => 'collection',
+        'opened_at' => 'datetime',
+        'clicked_at' => 'datetime',
+    ];
+}
 ```
 
 ## Note on dev testing
