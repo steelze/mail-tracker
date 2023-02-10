@@ -355,6 +355,7 @@ class MailTracker
                     Storage::disk(config('mail-tracker.tracker-filesystem'))->delete($filePath);
                 }
             });
+            
             MailTracker::sentEmailUrlClickedModel()->newQuery()->whereIn('sent_email_id', $emails->pluck('id'))->delete();
             MailTracker::sentEmailModel()->newQuery()->whereIn('id', $emails->pluck('id'))->delete();
         }
