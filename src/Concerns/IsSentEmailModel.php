@@ -3,16 +3,18 @@
 namespace jdavidbakr\MailTracker\Concerns;
 
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use jdavidbakr\MailTracker\Contracts\SentEmailModel;
 use jdavidbakr\MailTracker\MailTracker;
 
 trait IsSentEmailModel
 {
-    public function booIsSentEmailModel()
+    public static function bootIsSentEmailModel()
     {
-        static::deleting(function (self $email) {
+        static::deleting(function (Model|SentEmailModel $email) {
             if ($filePath = $email->meta?->get('content_file_path')) {
                 Storage::disk(config('mail-tracker.tracker-filesystem'))->delete($filePath);
             }
