@@ -8,6 +8,7 @@ use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Mail\SentMessage;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use jdavidbakr\MailTracker\Contracts\SentEmailModel;
 use jdavidbakr\MailTracker\Events\EmailSentEvent;
@@ -355,7 +356,7 @@ class MailTracker
                     Storage::disk(config('mail-tracker.tracker-filesystem'))->delete($filePath);
                 }
             });
-            
+
             MailTracker::sentEmailUrlClickedModel()->newQuery()->whereIn('sent_email_id', $emails->pluck('id'))->delete();
             MailTracker::sentEmailModel()->newQuery()->whereIn('id', $emails->pluck('id'))->delete();
         }
