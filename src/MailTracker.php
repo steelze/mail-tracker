@@ -349,15 +349,17 @@ class MailTracker
                 ->subDays(config('mail-tracker.expire-days')))
                 ->select('id', 'meta')
                 ->get();
+
             // remove files
             $emails->each(function ($email) {
                 if ($email->meta && ($filePath = $email->meta->get('content_file_path'))) {
                     Storage::disk(config('mail-tracker.tracker-filesystem'))->delete($filePath);
                 }
             });
-            
-            MailTracker::sentEmailUrlClickedModel()->newQuery()->whereIn('sent_email_id', $emails->pluck('id'))->delete();
-            MailTracker::sentEmailModel()->newQuery()->whereIn('id', $emails->pluck('id'))->delete();
+
+            $ids = $emails->pluck('id');
+            MailTracker::sentEmailUrlClickedModel()->newQuery()->whereIntegerInRaw('sent_email_id', $ids)->delete();
+            MailTracker::sentEmailModel()->newQuery()->whereIntegerInRaw('id', $ids)->delete();
         }
     }
 }
